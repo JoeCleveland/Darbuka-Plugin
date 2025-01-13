@@ -4,11 +4,11 @@ cmake_minimum_required(VERSION 3.22)
 
 project(DARBUKA_PLUGIN VERSION 0.0.1)
 
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 
 # find_package(OpenMP REQUIRED)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops")
+SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -DNDEBUG")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 file(GLOB_RECURSE EIGEN_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "Eigen/*")
 

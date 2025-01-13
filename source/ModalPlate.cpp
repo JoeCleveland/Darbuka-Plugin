@@ -16,13 +16,15 @@ bool is_boundary(uint i, uint width, uint n_nodes) {
     (i - width + 1) % width == 0;
 }
 
-ModalPlate::ModalPlate(double stifness) {
+ModalPlate::ModalPlate(double mass, double stifness, double base_decay) {
     std::cout << "CONSTRUCT ************************" << std::endl;
+
+    this->base_decay = base_decay;
 
     this->Fs = 44100.0;
     this->delta_t = (2.0 * M_PI) / this->Fs;
 
-    this->W = 8;
+    this->W = 12;
     uint N_full = W * W; //Temp value for N, before boundary conditions are removed
     this->N = N_full - (this->W*2 + (this->W-2)*2); //After BCs
     float L = 1.0 / (float)this->W;
@@ -30,7 +32,7 @@ ModalPlate::ModalPlate(double stifness) {
     //Initialize the element matrices
     this->M_e << 2, 1,
                  1, 2;
-    this->M_e *= (L/6.0) * 1; 
+    this->M_e *= (L/6.0) * mass; 
 
     this->K_e << 1, -1,
                  -1, 1;
@@ -84,6 +86,7 @@ ModalPlate::ModalPlate(double stifness) {
     this->f_proj = Eigen::ArrayXd::Zero(this->N);
     this->modal_decays = Eigen::ArrayXd::Zero(this->N);
     this->phase_angles = Eigen::ArrayXd::Zero(this->N);
+    this->force_envelope_on = false;
 
     this->solveModal();
 
@@ -95,70 +98,58 @@ void ModalPlate::solveModal() {
     this->eigenvalues = this->eigensolver.eigenvalues().head(this->N);
     this->eigenvectors = this->eigensolver.eigenvectors().topLeftCorner(this->N, this->N);
 
-    double base_decay = -1.5;
-    this->modal_decays = (this->eigenvalues.real().array() * base_decay * this->delta_t).exp();
-    std::cout << "Modal Decays === \n" << this->modal_decays << std::endl;
-}
-
-void ModalPlate::step() {
-    //for each mode, compute derivative and advance modal amplitudes
-    double delta_t = (2.0 * M_PI) / 44100.0;
-
-    std::complex<double> phase_shift(0, M_PI / 2);
-    std::complex<double> decay (-0.0015, 1.0);
-    Eigen::ArrayXcd lambda = this->eigenvalues * decay;
-
-    Eigen::ArrayXcd dA_t0 = (lambda * f_proj.array()) * (lambda * std::complex<double>(this->t) + phase_shift).exp();
-    Eigen::ArrayXcd dA_t1 = (lambda * f_proj.array()) * (lambda * std::complex<double>(this->t + delta_t) + phase_shift).exp();
-    Eigen::ArrayXcd derivatives = (dA_t0 + dA_t1) / 2;
-
-    // this->amplitudes += derivatives.matrix() * delta_t;
-    this->t += delta_t;
+    this->modal_decays = (this->eigenvalues.real().array() * this->base_decay * this->delta_t).exp();
+    // std::cout << "modes " << this->eigenvalues << std::endl;
 }
 
 void ModalPlate::getBlock(float* output, uint n_samples, uint projection_index) {
+
     //Write sines to output
     Eigen::ArrayXd samples = Eigen::ArrayXd::Zero(n_samples);
+
+    Eigen::ArrayXd new_forces = Eigen::ArrayXd::Zero(n_samples);
+    if(this->force_envelope_on) {
+        new_forces = Eigen::ArrayXd::LinSpaced(n_samples, 0, 2).tanh();
+    }
 
     double del_time_exclusive = this->delta_t * (n_samples);
     double del_time_inclusive = this->delta_t * (n_samples + 1);
 
     for(uint i = 0; i < this->N; i++) {
-        double angle_change =  del_time_exclusive * this->eigenvalues(i).real();
+        double angle_change = del_time_exclusive * this->eigenvalues(i).real() * this->ext_pitch;
 
         Eigen::ArrayXd phase_values = Eigen::ArrayXd::LinSpaced(n_samples, 
             this->phase_angles(i), this->phase_angles(i) + angle_change);
 
-        samples += phase_values.sin() *
-                        amplitudes(i) * 
-                        this->eigenvectors(projection_index, i).real().tanh();
+        samples += (phase_values.sin() *
+                        (amplitudes(i) + new_forces * f_proj(i)) * 
+                        this->eigenvectors(projection_index, i).real()).tanh();
 
         angle_change = del_time_inclusive * this->eigenvalues(i).real();
         this->phase_angles(i) += angle_change;
     }
 
     for(uint s = 0; s < n_samples; s++) {
-        output[s] = samples[s];
+        output[s] += samples[s];
+    }
+
+    if(this->force_envelope_on) {
+        this->amplitudes += f_proj;
+        this->force_envelope_on = false;
     }
 
     //Update modal amplitudes from decay
+    // this->modal_decays = (this->eigenvalues.real().array() * this->base_decay * this->ext_decay * this->delta_t).exp();
+
     this->amplitudes = this->amplitudes * this->modal_decays;
 }
 
 void ModalPlate::force(double location, double velocity) {
     Eigen::VectorXd f = (
-        (((Eigen::ArrayXd::LinSpaced(this->N, -3, 3) + location) / 0.1).pow(2) * -0.5).exp() * velocity / 
-            (0.1 * std::sqrt(2 * M_PI))
+        (((Eigen::ArrayXd::LinSpaced(this->N, -3, 3) + location) / 0.01).pow(2) * -0.5).exp() * velocity / 
+            (0.01 * std::sqrt(2 * M_PI))
                         ).array();
-    // this->f_proj = (this->eigenvectors * f).array(); 
-    // this->t = 0;
-    // this->amplitudes = Eigen::VectorXcd::Zero(this->N);
-
-    this->amplitudes += (this->eigenvectors.cwiseAbs() * f).array(); 
-    // std::cout << "VECTORS\n\n" << this->eigenvectors << "\n:::::::::::::::::::::\n\n" << this->eigenvectors * f;
-}
-
-double ModalPlate::sample(uint index) {
-    //Project sample point using mode shape
-    // return (this->eigenvectors.row(index).dot(this->amplitudes)).real();
+    this->f_proj = (this->eigenvectors.cwiseAbs() * f).array(); 
+    this->force_envelope_on = true;
+    std::cout << "PITCH " << this->ext_pitch << std::endl;
 }

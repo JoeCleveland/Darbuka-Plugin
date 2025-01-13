@@ -131,12 +131,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     auto length = buffer.getNumSamples();
 
+    //Handle MIDI input
     for(const auto msg : midiMessages) {
         // std::cout << msg.getMessage().getNoteNumber() << std::endl;
         if(msg.getMessage().isNoteOn()) {
             double force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 3.0;
             double velocity = msg.getMessage().getFloatVelocity();
             this->head.force(force_pos, velocity);
+            // this->fembrane.force();
         }
 
         if(msg.getMessage().isController()) {
@@ -148,12 +150,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
     }
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    //Handle parameters
+
+    // this->head.ext_pitch = this->membrane_pitch;
+    // this->head.ext_decay = this->membrane_decay;
+
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
@@ -165,8 +166,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // {
         // this->head.step();
         // this->rim.step();
-// 
+
         // channelData[samp] = this->head.sample(6) * 0.03 + this->rim.sample(4) * 0.03;
+        // this->fembrane.step();
+        // channelData[samp] = this->fembrane.sample(6);
     // }
 }
 

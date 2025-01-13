@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ModalPlate.h"
+// #include "FEMembrane.h"
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
@@ -42,10 +43,13 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    ModalPlate head = ModalPlate(2);
-    ModalPlate rim = ModalPlate(5);
-    double last_sample = 0;
-    double next_sample = 0;
+    ModalPlate head = ModalPlate(2, 4, -5);
+    ModalPlate rim = ModalPlate(2, 9, -2);
+    
+    // UI PARAMETERS 
+    //==============================================================================
+    double membrane_pitch;
+    double membrane_decay;
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

@@ -18,7 +18,7 @@ bool is_boundary(uint i, uint width, uint n_nodes) {
 FEMembrane::FEMembrane() {
     std::cout << "CONSTRUCT ************************" << std::endl;
 
-    this->W = 7;
+    this->W = 12;
     uint N_full = W * W; //Temp value for N, before boundary conditions are removed
     this->N = N_full - (this->W*2 + (this->W-2)*2); //After BCs
     float L = 1.0 / (float)this->W;
