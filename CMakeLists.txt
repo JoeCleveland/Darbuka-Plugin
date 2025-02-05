@@ -38,6 +38,7 @@ target_include_directories(DarbukaPlugin PUBLIC "Eigen")
 target_sources(DarbukaPlugin
     PRIVATE
         "${EIGEN_SOURCES}"
+        source/RenderView.cpp
         source/ModalPlate.cpp
         source/FEMembrane.cpp
         source/PluginEditor.cpp
@@ -54,6 +55,7 @@ target_link_libraries(DarbukaPlugin
     PRIVATE
         # AudioPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
+        juce::juce_opengl
         # OpenMP::OpenMP_CXX
     PUBLIC
         juce::juce_recommended_config_flags

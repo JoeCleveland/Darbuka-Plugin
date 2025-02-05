@@ -7,6 +7,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 {
     juce::ignoreUnused (processorRef);
 
+    addAndMakeVisible(renderView);
+
     membrane_pitch.setSliderStyle (juce::Slider::LinearBarVertical);
     membrane_pitch.setRange (0.1, 5.0, 0.1);
     membrane_pitch.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
@@ -49,6 +51,7 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
+    renderView.setBounds(120, 30, getWidth() - 140, getHeight() - 60);
     membrane_pitch.setBounds (40, 30, 20, getHeight() - 60);
     membrane_decay.setBounds (80, 30, 20, getHeight() - 60);
 }
