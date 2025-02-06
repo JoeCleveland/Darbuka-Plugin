@@ -8,7 +8,8 @@ set(CMAKE_BUILD_TYPE Release)
 
 # find_package(OpenMP REQUIRED)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -DNDEBUG")
+# SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -DNDEBUG")
+SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -mfpu=neon -funroll-loops -pthread")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 file(GLOB_RECURSE EIGEN_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "Eigen/*")
 
@@ -38,6 +39,8 @@ target_include_directories(DarbukaPlugin PUBLIC "Eigen")
 target_sources(DarbukaPlugin
     PRIVATE
         "${EIGEN_SOURCES}"
+        source/ModalElement.cpp
+        source/CircularMesh.cpp
         source/RenderView.cpp
         source/ModalPlate.cpp
         source/FEMembrane.cpp
@@ -53,7 +56,7 @@ target_compile_definitions(DarbukaPlugin
 
 target_link_libraries(DarbukaPlugin
     PRIVATE
-        # AudioPluginData           # If we'd created a binary data target, we'd link to it here
+        # DarbukaPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
         juce::juce_opengl
         # OpenMP::OpenMP_CXX

@@ -145,7 +145,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             int cc_number = msg.getMessage().getControllerNumber();
             if(cc_number == 16) {
                 double force_pos = msg.getMessage().getControllerValue() / 127.0f;
-                this->rim.force(force_pos, force_pos);
+                // this->rim.force(force_pos, force_pos);
             }
         }
     }
@@ -153,24 +153,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Handle parameters
 
     // this->head.ext_pitch = this->membrane_pitch;
-    // this->head.ext_decay = this->membrane_decay;
+    this->head.rt_params = this->rt_params;
+    this->head.setOfflineParams(this->ol_params);
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
     auto* channelData = buffer.getWritePointer(0);
     this->head.getBlock(channelData, length, 6);
-    this->rim.getBlock(channelData, length, 2);
-
-    // for (int samp = 0; samp < length; ++samp)
-    // {
-        // this->head.step();
-        // this->rim.step();
-
-        // channelData[samp] = this->head.sample(6) * 0.03 + this->rim.sample(4) * 0.03;
-        // this->fembrane.step();
-        // channelData[samp] = this->fembrane.sample(6);
-    // }
 }
 
 //==============================================================================

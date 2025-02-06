@@ -24,5 +24,11 @@ private:
     juce::Slider membrane_pitch;
     juce::Slider membrane_decay;
 
+    juce::Slider membrane_youngs_mod;
+    juce::Slider membrane_moment_inert;
+    juce::Slider membrane_mass_density;
+    juce::Slider membrane_spoke_length;
+    juce::Slider membrane_crust_ratio;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };
