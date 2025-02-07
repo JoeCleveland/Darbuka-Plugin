@@ -72,12 +72,20 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
                         (amplitudes(i) + new_forces * f_proj(i)) * 
                         this->mode_shapes_trunc(projection_index, i).real());
 
+        samples += (phase_values.sin() *
+                        (amplitudes(i) + new_forces * f_proj(i)) * 
+                        this->mode_shapes_trunc(projection_index-1, i).real());
+
+        samples += (phase_values.sin() *
+                        (amplitudes(i) + new_forces * f_proj(i)) * 
+                        this->mode_shapes_trunc(projection_index-2, i).real());
+
         angle_change = del_time_inclusive * this->modes_trunc(i);
         this->phase_angles(i) += angle_change;
     }
 
     for(uint s = 0; s < n_samples; s++) {
-        output[s] += samples[s] * 0.01;
+        output[s] += samples[s] * 0.005;
     }
 
     if(this->force_envelope_on) {
@@ -97,11 +105,12 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
 
 void ModalElement::force(double location, double velocity) {
     Eigen::VectorXd f = (
-        (((Eigen::ArrayXd::LinSpaced(this->N_trunc, -3, 3) + location) / 0.03).pow(2) * -0.5).exp() * velocity / 
-            (0.03 * std::sqrt(2 * M_PI))
+        (((Eigen::ArrayXd::LinSpaced(this->N_trunc, -3, 3) + location) / 0.003).pow(2) * -0.5).exp() * velocity / 
+            (0.003 * std::sqrt(2 * M_PI))
                         ).array();
 
     this->modal_data_lock.lock();
+
     this->f_proj = (this->mode_shapes_trunc.cwiseAbs() * f).array(); 
     this->modal_data_lock.unlock();
 

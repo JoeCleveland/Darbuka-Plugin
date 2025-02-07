@@ -178,3 +178,41 @@ void CircularMesh::assemble() {
         }
     }
 }
+
+void CircularMesh::force(double location, double velocity, int width) {
+    //x = np.linspace(-3, 3, size)
+    //return np.exp((((x-mu)/sigma) ** 2) / -2) / (sigma * np.sqrt(2 * np.pi))
+    double sigma = 2;
+    if(width == 1) {
+        sigma = 0.003;
+        location *= 10;
+    } else {
+        location *= 1;
+    }
+
+    Eigen::ArrayXd x = Eigen::ArrayXd::LinSpaced((int) this->N_trunc, -3, 3);
+    Eigen::ArrayXd exp_term = (((x.array() - location) / sigma).pow(2) * (-0.5)).exp() * velocity;
+    Eigen::ArrayXd f_transverse = exp_term / (sigma * std::sqrt(2 * M_PI));
+  
+    Eigen::ArrayXd f;
+    // if(width == 1) {
+    //     f = Eigen::ArrayXd::Zero(this->N_trunc);
+    //     f(Eigen::seq(2, Eigen::last, 4)) = f_transverse;
+    // } else {
+    f = f_transverse;
+    // }
+
+    std::cout << "LOC " << location << std::endl;  
+    std::cout << "WIDTH " << width << std::endl;  
+    std::cout << "SIGMA " << sigma << std::endl;  
+    // std::cout << "*****" << std::endl;
+    // std::cout << "f " << f << std::endl;
+    // std::cout << "=====" << std::endl;
+    // std::cout << "f_tr " << f_transverse << std::endl;
+    this->modal_data_lock.lock();
+
+    this->f_proj = (this->mode_shapes_trunc.cwiseAbs() * f.matrix()).array(); 
+    this->modal_data_lock.unlock();
+
+    this->force_envelope_on = true;
+}

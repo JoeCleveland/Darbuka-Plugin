@@ -131,23 +131,38 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     auto length = buffer.getNumSamples();
 
-    //Handle MIDI input
+    bool strike = false;
+    double velocity = 0;
+    double force_pos = 0;
+
     for(const auto msg : midiMessages) {
         // std::cout << msg.getMessage().getNoteNumber() << std::endl;
         if(msg.getMessage().isNoteOn()) {
-            double force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 3.0;
-            double velocity = msg.getMessage().getFloatVelocity();
-            this->head.force(force_pos, velocity);
-            // this->fembrane.force();
+            strike = true;
+            force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 3.0;
+            velocity = msg.getMessage().getFloatVelocity();
         }
 
         if(msg.getMessage().isController()) {
             int cc_number = msg.getMessage().getControllerNumber();
-            if(cc_number == 16) {
-                double force_pos = msg.getMessage().getControllerValue() / 127.0f;
-                // this->rim.force(force_pos, force_pos);
+            if(cc_number == 20) {
+                int gesture = msg.getMessage().getControllerValue();
+                if(gesture == 0)
+                    this->doom_count++;
+                if(gesture == 1)
+                    this->tek_count++;
             }
         }
+    }
+
+    if(strike) {
+        if(doom_count > tek_count) {
+            this->head.force(force_pos, velocity, 1);
+        } else {
+            this->head.force(force_pos, velocity, 0);
+        }
+        this->doom_count = 0;
+        this->tek_count = 0;
     }
 
     //Handle parameters
@@ -160,7 +175,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         buffer.clear (i, 0, buffer.getNumSamples());
 
     auto* channelData = buffer.getWritePointer(0);
-    this->head.getBlock(channelData, length, 6);
+    this->head.getBlock(channelData, length, 9);
 }
 
 //==============================================================================

@@ -1,5 +1,14 @@
 #include "RenderView.h"
 #include <iostream>
+#include <Eigen/Dense>
+
+Eigen::Matrix2f rotation_matrix(float theta) {
+    Eigen::Matrix2f rot_mat;
+
+    rot_mat << std::cos(theta), -std::sin(theta),
+               std::sin(theta), std::cos(theta);
+    return rot_mat;
+}
 
 void printMatrix(juce::Matrix3D<float> matrix, char* name) {
     std::cout << name << "[[";
@@ -9,31 +18,52 @@ void printMatrix(juce::Matrix3D<float> matrix, char* name) {
     std::cout << "]]" << std::endl;
 }
 
-void buildSquareMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint width, uint height) {
+// void buildSquareMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint width, uint height) {
+//     vertices = {};
+//     indices = {};
+
+//     uint vertex_idx = 0;
+//     for(int i = 0; i < width; i++) {
+//         for(int j = 0; j < height; j++) {
+
+//             float x = float(i - width/2) / float(width/2);
+//             float z = float(-i) / float(height);
+//             vertices.push_back({
+//                 {x, z, 0}, //Position
+//                 {0.2f, 1.0f, 0.3f, 1.0f}  //Color
+//             });
+
+//             if(i < width - 1 && j < height - 1){
+//                 indices.push_back(vertex_idx);
+//                 indices.push_back(vertex_idx + 1);
+
+//                 indices.push_back(vertex_idx);
+//                 indices.push_back(vertex_idx + height);
+//             }
+
+//             vertex_idx++;
+//         }
+//     }
+// }
+
+void buildCircularMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint spokes, uint layers) {
     vertices = {};
     indices = {};
 
-    uint vertex_idx = 0;
-    for(int i = 0; i < width; i++) {
-        for(int j = 0; j < height; j++) {
-
-            float x = float(i - width/2) / float(width/2);
-            float z = float(-i) / float(height);
-            vertices.push_back({
-                {x, z, 0}, //Position
-                {0.2f, 1.0f, 0.3f, 1.0f}  //Color
-            });
-
-            if(i < width - 1 && j < height - 1){
-                indices.push_back(vertex_idx);
-                indices.push_back(vertex_idx + 1);
-
-                indices.push_back(vertex_idx);
-                indices.push_back(vertex_idx + height);
-            }
-
-            vertex_idx++;
-        }
+    Eigen::Vector2f spoke = Eigen::Vector2f({1.0, 0.0});
+    uint index = 0;
+    for(uint s = 0; s < spokes; s++) {
+        vertices.push_back({
+            {0, 0, 0}, //Position
+            {0.2f, 1.0f, 0.3f, 1.0f}  //Color
+        });
+        vertices.push_back({
+            {spoke(0), 0, spoke(1)}, 
+            {0.2f, 1.0f, 0.3f, 1.0f}  
+        });
+        indices.push_back(index++);
+        indices.push_back(index++);
+        spoke = rotation_matrix(2 * M_PI / spokes) * spoke;
     }
 }
 
@@ -45,15 +75,15 @@ juce::Matrix3D<float> RenderView::getProjectionMatrix() const
     return juce::Matrix3D<float>::fromFrustum (-w, w, -h, h, 4.0f, 30.0f);  
 }
 
-juce::Matrix3D<float> RenderView::getViewMatrix() const
+juce::Matrix3D<float> RenderView::getViewMatrix(float angle_y) const
 {
-    auto viewMatrix = juce::Matrix3D<float>::fromTranslation ({ -3.0f, 0.0f, -10.0f });  
-    auto rotationMatrix = viewMatrix.rotation ({ 0.0f,
-                                                    0.0f,
+    auto viewMatrix = juce::Matrix3D<float>::fromTranslation ({ 0.0f, -0.65f, -10.0f });  
+    auto rotationMatrix = viewMatrix.rotation ({ 0.3f,
+                                                    angle_y,
                                                     0.0f });                        
-    printMatrix(viewMatrix, "VIEW");
-    printMatrix(rotationMatrix, "ROT");
-    printMatrix(viewMatrix * rotationMatrix, "VIEw / ROT");
+    // printMatrix(viewMatrix, "VIEW");
+    // printMatrix(rotationMatrix, "ROT");
+    // printMatrix(viewMatrix * rotationMatrix, "VIEw / ROT");
 
     return viewMatrix * rotationMatrix;                                           
 }
@@ -77,7 +107,7 @@ void RenderView::newOpenGLContextCreated()
     openGLContext.extensions.glGenBuffers(1, &vbo);
     openGLContext.extensions.glGenBuffers(1, &ibo);
 
-    buildSquareMesh(vertexBuffer, indexBuffer, 12, 12);
+    buildCircularMesh(vertexBuffer, indexBuffer, 8, 8);
 
     // Bind the VBO.
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
@@ -143,11 +173,10 @@ void RenderView::newOpenGLContextCreated()
 
 void RenderView::renderOpenGL()
 {
+    angle_y += 0.003;
     juce::OpenGLHelpers::clear(juce::Colours::rosybrown);
 
     shaderProgram->use();
-
-    std::cout << "HELLO " << std::endl;
 
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, ibo);
@@ -187,7 +216,7 @@ void RenderView::renderOpenGL()
         openGLContext.extensions.glUniformMatrix4fv(location, 1, juce::gl::GL_FALSE, getProjectionMatrix().mat);
 
     if((location = openGLContext.extensions.glGetUniformLocation(shaderProgram->getProgramID(), "viewMatrix")) >= 0)
-        openGLContext.extensions.glUniformMatrix4fv(location, 1, juce::gl::GL_FALSE, getViewMatrix().mat);
+        openGLContext.extensions.glUniformMatrix4fv(location, 1, juce::gl::GL_FALSE, getViewMatrix(angle_y).mat);
 
     juce::gl::glDrawElements(
         juce::gl::GL_LINES,       // Tell OpenGL to render triangles.

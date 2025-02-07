@@ -15,7 +15,7 @@ public:
     void openGLContextClosing() override;
 
     juce::Matrix3D<float> getProjectionMatrix() const;
-    juce::Matrix3D<float> getViewMatrix() const;
+    juce::Matrix3D<float> getViewMatrix(float angle_y) const;
 
     struct Vertex
     {
@@ -24,6 +24,8 @@ public:
     };
     
 private:
+    float angle_y = 0;
+
     juce::OpenGLContext openGLContext;
 
     std::vector<Vertex> vertexBuffer;

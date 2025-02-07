@@ -9,7 +9,7 @@ public:
     ModalElement(double base_decay);
 
     void getBlock(float* output, uint n_samples, uint projection_index);
-    void force(double location, double velocity);
+    virtual void force(double location, double velocity);
     void initModal();
     void solveModal();
 

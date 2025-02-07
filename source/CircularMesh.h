@@ -9,6 +9,8 @@ public:
     CircularMesh(uint N_Spokes, uint N_Layers, double spokeLength, double A, double E, double I, double p);
     void assemble();
 
+    void force(double location, double velocity, int width);
+
     struct offline_params {
         double youngs_mod = 3.0;
         double moment_inert = 6.0;
@@ -34,4 +36,6 @@ private:
     double E; //Youngs Modulus
     double I; //Moment of Inertia
     double p; //Mass Density
+
+
 };

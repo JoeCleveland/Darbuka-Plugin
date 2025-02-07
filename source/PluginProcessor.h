@@ -45,6 +45,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
    CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
+   int doom_count = 0;
+   int tek_count = 0;
 
     // UI PARAMETERS 
     //==============================================================================
