@@ -9,7 +9,7 @@ public:
     CircularMesh(uint N_Spokes, uint N_Layers, double spokeLength, double A, double E, double I, double p);
     void assemble();
 
-    void force(double location, double velocity, int width);
+    Eigen::ArrayXd force(double location, double velocity, int width);
 
     struct offline_params {
         double youngs_mod = 3.0;

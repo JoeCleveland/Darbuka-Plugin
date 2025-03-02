@@ -16,11 +16,13 @@ public:
     virtual void assemble() = 0;
 
     struct realtime_params {
+        double cutoff;
         double decay;
     };
 
     realtime_params rt_params;
 protected:
+    int last_hit = 0;
 
     std::mutex modal_data_lock;
 

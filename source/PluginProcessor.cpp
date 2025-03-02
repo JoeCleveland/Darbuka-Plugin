@@ -157,9 +157,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     if(strike) {
         if(doom_count > tek_count) {
-            this->head.force(force_pos, velocity, 1);
+            this->force_pattern = this->head.force(force_pos, velocity, 1);
         } else {
-            this->head.force(force_pos, velocity, 0);
+            this->force_pattern = this->head.force(force_pos, velocity, 0);
         }
         this->doom_count = 0;
         this->tek_count = 0;
@@ -176,6 +176,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     auto* channelData = buffer.getWritePointer(0);
     this->head.getBlock(channelData, length, 9);
+    this->filter.getBlock(channelData, length, this->rt_params.cutoff);
 }
 
 //==============================================================================

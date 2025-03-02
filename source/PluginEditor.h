@@ -5,7 +5,8 @@
 
 //==============================================================================
 class AudioPluginAudioProcessorEditor final : public juce::AudioProcessorEditor,
-                                              private juce::Slider::Listener 
+                                              private juce::Slider::Listener,
+                                              private juce::Timer
 {
 public:
     explicit AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor&);
@@ -14,6 +15,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     void sliderValueChanged (juce::Slider* slider) override;
@@ -21,7 +23,8 @@ private:
     RenderView renderView;
     AudioPluginAudioProcessor& processorRef;
 
-    juce::Slider membrane_pitch;
+    juce::Slider filter_cut;
+
     juce::Slider membrane_decay;
 
     juce::Slider membrane_youngs_mod;

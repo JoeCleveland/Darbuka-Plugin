@@ -21,6 +21,20 @@ void ModalElement::solveModal() {
     this->eigenvalues = this->eigensolver.eigenvalues().head(this->N);
     this->eigenvectors = this->eigensolver.eigenvectors().topLeftCorner(this->N, this->N);
 
+    //Normalize eigenvectors
+
+    // Eigen::MatrixXcd normalized_eigens = Eigen::MatrixXcd::Zero(this->N, this->N);
+    // for(uint i = 0; i < this->N; i++){
+    //     Eigen::VectorXcd phi = this->eigenvectors(Eigen::all, i);
+    //     normalized_eigens(Eigen::all, i) = phi.array() / (phi.transpose() * this->M * phi).array().sqrt();
+    //     std::cout << phi.transpose() * this->M * phi << std::endl;
+    // }
+    // std::cout << "EIGEN-OLD\n" << this->eigenvectors(Eigen::seqN(0, 3), Eigen::seqN(0, 3)) << std::endl;
+    // std::cout << "EIGENVECTORS\n" << normalized_eigens(Eigen::seqN(0, 3), Eigen::seqN(0, 3)) << std::endl;
+    // std::cout << "EIGENVALUES\n" << this->eigenvalues(Eigen::seqN(0, 3)) << std::endl;
+
+    // this->eigenvectors = normalized_eigens;
+
     this->truncateModes();
 }
 
@@ -64,6 +78,9 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
 
     for(uint i = 0; i < this->N_trunc; i++) {
         double angle_change = del_time_exclusive * this->modes_trunc.real()(i);
+        if(this->last_hit == 1) {
+            angle_change = del_time_exclusive * (this->modes_trunc.real()(i) - 10.0);
+        }
 
         Eigen::ArrayXd phase_values = Eigen::ArrayXd::LinSpaced(n_samples, 
             this->phase_angles(i), this->phase_angles(i) + angle_change);
@@ -72,14 +89,15 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
                         (amplitudes(i) + new_forces * f_proj(i)) * 
                         this->mode_shapes_trunc(projection_index, i).real());
 
-        samples += (phase_values.sin() *
-                        (amplitudes(i) + new_forces * f_proj(i)) * 
-                        this->mode_shapes_trunc(projection_index-1, i).real());
+        if(this->last_hit == 0) {
+            samples += (phase_values.sin() *
+                            (amplitudes(i) + new_forces * f_proj(i)) * 
+                            this->mode_shapes_trunc(projection_index-1, i).real());
 
-        samples += (phase_values.sin() *
-                        (amplitudes(i) + new_forces * f_proj(i)) * 
-                        this->mode_shapes_trunc(projection_index-2, i).real());
-
+            samples += (phase_values.sin() *
+                            (amplitudes(i) + new_forces * f_proj(i)) * 
+                            this->mode_shapes_trunc(projection_index-2, i).real());
+        }
         angle_change = del_time_inclusive * this->modes_trunc(i);
         this->phase_angles(i) += angle_change;
     }

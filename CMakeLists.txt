@@ -39,6 +39,7 @@ target_include_directories(DarbukaPlugin PUBLIC "Eigen")
 target_sources(DarbukaPlugin
     PRIVATE
         "${EIGEN_SOURCES}"
+        source/AllPassFilter.cpp
         source/ModalElement.cpp
         source/CircularMesh.cpp
         source/RenderView.cpp

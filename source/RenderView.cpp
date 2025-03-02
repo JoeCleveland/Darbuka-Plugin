@@ -46,24 +46,60 @@ void printMatrix(juce::Matrix3D<float> matrix, char* name) {
 //     }
 // }
 
-void buildCircularMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint spokes, uint layers) {
+void RenderView::buildCircularMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint spokes, uint layers) {
     vertices = {};
     indices = {};
 
-    Eigen::Vector2f spoke = Eigen::Vector2f({1.0, 0.0});
+    float SCALE = 0.35f;
     uint index = 0;
-    for(uint s = 0; s < spokes; s++) {
-        vertices.push_back({
-            {0, 0, 0}, //Position
-            {0.2f, 1.0f, 0.3f, 1.0f}  //Color
-        });
-        vertices.push_back({
-            {spoke(0), 0, spoke(1)}, 
-            {0.2f, 1.0f, 0.3f, 1.0f}  
-        });
-        indices.push_back(index++);
-        indices.push_back(index++);
-        spoke = rotation_matrix(2 * M_PI / spokes) * spoke;
+    for(uint l = 0; l < layers; l++) {
+        Eigen::Vector2f spoke = Eigen::Vector2f({(l+1)*SCALE, l * SCALE});
+        for(uint s = 0; s < spokes; s++) {
+            Eigen::Vector2f next_spoke = rotation_matrix(2 * M_PI / spokes) * spoke;
+
+            float y_1 = 0;
+            float y_2 = 0;
+            float y_3 = 0;
+            if(this->force_pattern.size() > (l+1) * s && 
+               this->force_pattern.minCoeff() > 0) {
+                y_1 = (float) this->force_pattern(l * s) * 25;
+                y_2 = (float) this->force_pattern((l + 1) * s) * 25;
+
+                if(s + 1 > spokes) {
+                    y_3 = (float) this->force_pattern((l + 1) * (s*0)) * 25;
+                } else {
+                    y_3 = (float) this->force_pattern((l + 1) * (s+1)) * 25;
+                }
+            }
+
+            // std::cout << "FORCE_PAT " << this->force_pattern << std::endl;
+            if(l == 0) {
+                vertices.push_back({
+                    {0, y_1, 0}, //Position
+                    {1.0f, 0.3f, 0.0f, 1.0f}  //Color
+                });
+            } else {
+                vertices.push_back({
+                    {spoke(0)/l * (l-1), y_1, spoke(1)/l * (l-1)}, //Position
+                    {1.0f, 0.3f, 0.0f, 1.0f}  //Color
+                });
+            }
+
+            vertices.push_back({
+                {spoke(0), y_2, spoke(1)}, 
+                {1.0f, 0.3f, 0.0f, 1.0f}  //Color
+            });
+            vertices.push_back({
+                {next_spoke(0), y_3, next_spoke(1)}, 
+                {1.0f, 0.3f, 0.0f, 1.0f}  //Color
+            });
+            indices.push_back(index);
+            indices.push_back(index + 1);
+            indices.push_back(index + 1);
+            indices.push_back(index + 2);
+            index += 3;
+            spoke = next_spoke;
+        }
     }
 }
 
@@ -107,7 +143,7 @@ void RenderView::newOpenGLContextCreated()
     openGLContext.extensions.glGenBuffers(1, &vbo);
     openGLContext.extensions.glGenBuffers(1, &ibo);
 
-    buildCircularMesh(vertexBuffer, indexBuffer, 8, 8);
+    this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
 
     // Bind the VBO.
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
@@ -174,12 +210,30 @@ void RenderView::newOpenGLContextCreated()
 void RenderView::renderOpenGL()
 {
     angle_y += 0.003;
-    juce::OpenGLHelpers::clear(juce::Colours::rosybrown);
+    juce::OpenGLHelpers::clear(juce::Colour::fromRGB(0, 30, 50));
 
     shaderProgram->use();
 
+    this->force_pattern = this->force_pattern * 0.9;
+    this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
+
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
+
+    openGLContext.extensions.glBufferData(
+        juce::gl::GL_ARRAY_BUFFER,                        // The type of data we're sending.           
+        sizeof(Vertex) * vertexBuffer.size(),   // The size (in bytes) of the data.
+        vertexBuffer.data(),                    // A pointer to the actual data.
+        juce::gl::GL_STATIC_DRAW                          // How we want the buffer to be drawn.
+    );
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ELEMENT_ARRAY_BUFFER, ibo);
+    
+    // Send the indices data.
+    openGLContext.extensions.glBufferData(
+        juce::gl::GL_ELEMENT_ARRAY_BUFFER,
+        sizeof(unsigned int) * indexBuffer.size(),
+        indexBuffer.data(),
+        juce::gl::GL_STATIC_DRAW
+    );
 
     // Enable the position attribute.
     openGLContext.extensions.glVertexAttribPointer(

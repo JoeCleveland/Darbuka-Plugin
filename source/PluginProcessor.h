@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ModalPlate.h"
 #include "CircularMesh.h"
+#include "AllPassFilter.h"
 // #include "FEMembrane.h"
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -48,10 +49,14 @@ public:
    int doom_count = 0;
    int tek_count = 0;
 
+   AllPassFilter filter = AllPassFilter();
+
     // UI PARAMETERS 
     //==============================================================================
     ModalElement::realtime_params rt_params;
     CircularMesh::offline_params ol_params;
+
+    Eigen::ArrayXd force_pattern = Eigen::ArrayXd::Zero(0);
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

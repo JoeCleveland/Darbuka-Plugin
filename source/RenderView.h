@@ -3,6 +3,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_opengl/juce_opengl.h>
+#include <Eigen/Dense>
 
 class RenderView : public juce::Component, public juce::OpenGLRenderer
 {
@@ -22,7 +23,10 @@ public:
         float position[3];
         float colour[4];
     };
+
+    void buildCircularMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint spokes, uint layers);
     
+    Eigen::ArrayXd force_pattern = Eigen::ArrayXd::Zero(0);
 private:
     float angle_y = 0;
 
