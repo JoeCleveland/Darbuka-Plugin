@@ -9,6 +9,9 @@ public:
     BeamSystem3D(Geom reference_geom, double A, double E, double I, double G, double p);
     void assemble();
 
+    Geom reference_geom;
+    Geom curr_geom;
+
 protected:
     //When using the no geom constructor in a child class,
     //The child should set N, reference_geom, then call:
@@ -16,8 +19,6 @@ protected:
     // .  solveModal()
     // .  initModal()
     BeamSystem3D(double A, double E, double I, double G, double p);
-
-    Geom reference_geom;
 
     double A; //Area
     double E; //Youngs Modulus

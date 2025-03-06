@@ -10,6 +10,9 @@ public:
 
     void setOfflineParams(Params::offline_params ol_params);
 private:
+    double pressing_force;
+    int pressing_index;
+
     void updateBendingGeom();
     void dispatchModalUpdate();
     void modalUpdate();

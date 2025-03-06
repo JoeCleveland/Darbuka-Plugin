@@ -103,6 +103,26 @@ void RenderView::buildCircularMesh(std::vector<RenderView::Vertex>& vertices, st
     }
 }
 
+void RenderView::renderGeom(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, Geom geom) {
+    vertices = {};
+    indices = {};
+
+    float SCALE = 0.28f;
+
+    for(Eigen::Vector3d point : geom.points) {
+        point *= SCALE;
+        vertices.push_back({
+            {float(point(0)), float(point(1)), float(point(2))},
+            {1.0f, 0.0f, 0.0f}
+        });
+    }
+
+    for(Geom::Connection conn : geom.connections) {
+        indices.push_back(conn.from);
+        indices.push_back(conn.to);
+    }
+}
+
 juce::Matrix3D<float> RenderView::getProjectionMatrix() const
 {
     auto w = 1.0f / (0.5f + 0.1f);                                          
@@ -143,7 +163,8 @@ void RenderView::newOpenGLContextCreated()
     openGLContext.extensions.glGenBuffers(1, &vbo);
     openGLContext.extensions.glGenBuffers(1, &ibo);
 
-    this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
+    // this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
+    this->renderGeom(vertexBuffer, indexBuffer, this->curr_geom);
 
     // Bind the VBO.
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
@@ -214,8 +235,9 @@ void RenderView::renderOpenGL()
 
     shaderProgram->use();
 
-    this->force_pattern = this->force_pattern * 0.9;
-    this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
+    // this->force_pattern = this->force_pattern * 0.9;
+    // this->buildCircularMesh(vertexBuffer, indexBuffer, 24, 8);
+    this->renderGeom(vertexBuffer, indexBuffer, this->curr_geom);
 
     openGLContext.extensions.glBindBuffer(juce::gl::GL_ARRAY_BUFFER, vbo);
 

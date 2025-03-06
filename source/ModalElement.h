@@ -17,6 +17,7 @@ public:
     virtual void assemble() = 0;
 
     Params::realtime_params rt_params;
+    double eigen_norm_ratio = 0;
 protected:
     int last_hit = 0;
 

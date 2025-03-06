@@ -48,8 +48,8 @@ public:
 
 //    CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
    CircularBeamMesh head = CircularBeamMesh(1, 
-                                            10, 
-                                            8,   
+                                            16, 
+                                            6,   
                                             1,  //A 
                                             Params::E_DEFAULT,
                                             Params::I_DEFAULT,
@@ -66,6 +66,7 @@ public:
     Params::offline_params ol_params;
 
     Eigen::ArrayXd force_pattern = Eigen::ArrayXd::Zero(0);
+    Geom curr_geom;
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)

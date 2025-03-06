@@ -4,6 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_opengl/juce_opengl.h>
 #include <Eigen/Dense>
+#include "Geom.h"
 
 class RenderView : public juce::Component, public juce::OpenGLRenderer
 {
@@ -25,8 +26,10 @@ public:
     };
 
     void buildCircularMesh(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, uint spokes, uint layers);
+    void renderGeom(std::vector<RenderView::Vertex>& vertices, std::vector<unsigned int>& indices, Geom geom);
     
     Eigen::ArrayXd force_pattern = Eigen::ArrayXd::Zero(0);
+    Geom curr_geom;
 private:
     float angle_y = 0;
 

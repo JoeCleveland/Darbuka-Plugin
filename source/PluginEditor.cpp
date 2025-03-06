@@ -33,7 +33,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     membrane_decay.addListener(this);
 
     membrane_youngs_mod.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
-    membrane_youngs_mod.setRange (0.5, 12.0, 0.1);
+    membrane_youngs_mod.setRange (0.5, 32.0, 0.1);
     membrane_youngs_mod.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_youngs_mod.setPopupDisplayEnabled (true, false, this);
     membrane_youngs_mod.setTextValueSuffix ("YOUNGS MODULUS");
@@ -43,7 +43,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     membrane_youngs_mod.addListener(this);
 
     membrane_moment_inert.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
-    membrane_moment_inert.setRange (0.5, 12.0, 0.1);
+    membrane_moment_inert.setRange (0.5, 32.0, 0.1);
     membrane_moment_inert.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_moment_inert.setPopupDisplayEnabled (true, false, this);
     membrane_moment_inert.setTextValueSuffix ("MOMENT OF INERTIA");
@@ -53,7 +53,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     membrane_moment_inert.addListener(this);
 
     membrane_mass_density.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
-    membrane_mass_density.setRange (0.005, 4.0, 0.005);
+    membrane_mass_density.setRange (0.001, 2.0, 0.001);
     membrane_mass_density.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_mass_density.setPopupDisplayEnabled (true, false, this);
     membrane_mass_density.setTextValueSuffix ("MASS DENSITY");
@@ -73,16 +73,26 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     membrane_spoke_length.addListener(this);
 
     membrane_crust_ratio.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
-    membrane_crust_ratio.setRange (0.3, 3.0, 0.1);
+    membrane_crust_ratio.setRange (0.0, 1.0, 0.01);
     membrane_crust_ratio.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_crust_ratio.setPopupDisplayEnabled (true, false, this);
     membrane_crust_ratio.setTextValueSuffix ("CRUST RATIO");
-    membrane_crust_ratio.setValue(1.0);
+    membrane_crust_ratio.setValue(0.0);
     membrane_crust_ratio.setColour(juce::Slider::ColourIds::trackColourId, sliderColor);
     addAndMakeVisible (&membrane_crust_ratio);
     membrane_crust_ratio.addListener(this);
 
-    setSize (800, 300);
+    bending_force.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    bending_force.setRange (0.0, 3.0, 0.01);
+    bending_force.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
+    bending_force.setPopupDisplayEnabled (true, false, this);
+    bending_force.setTextValueSuffix ("BENDING FORCE");
+    bending_force.setValue(0.0);
+    bending_force.setColour(juce::Slider::ColourIds::trackColourId, sliderColor);
+    addAndMakeVisible (&bending_force);
+    bending_force.addListener(this);
+
+    setSize (800, 600);
 
     startTimer(100);
 }
@@ -100,13 +110,13 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colour::fromRGB(115, 115, 110));
     g.setFont (15.0f);
 
-    g.drawFittedText ("Filter", 40, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Decay", 80, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Youngs", 120, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Inertia", 120, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Density", 120, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Size", 120, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
-    g.drawFittedText ("Ratio", 120, getHeight() - 20, 20, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Filter", 40, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Decay", 80, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Youngs", 120, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Inertia", 160, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Density", 200, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Size", 240, 80, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Ratio", 280, 80, 40, 15, juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
@@ -120,6 +130,8 @@ void AudioPluginAudioProcessorEditor::resized()
     membrane_mass_density.setBounds (200, 30, 40, 40);
     membrane_spoke_length.setBounds (240, 30, 40, 40);
     membrane_crust_ratio.setBounds (280, 30, 40, 40);
+
+    bending_force.setBounds (40, 120, 40, 40);
 }
 
 void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) 
@@ -132,6 +144,8 @@ void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
     this->processorRef.ol_params.mass_density = membrane_mass_density.getValue();
     this->processorRef.ol_params.spoke_length = membrane_spoke_length.getValue();
     this->processorRef.ol_params.crust_ratio = membrane_crust_ratio.getValue();
+
+    this->processorRef.ol_params.pressing_force = bending_force.getValue();
 }
 
 void AudioPluginAudioProcessorEditor::timerCallback() {
@@ -139,5 +153,9 @@ void AudioPluginAudioProcessorEditor::timerCallback() {
        this->processorRef.force_pattern.minCoeff() > 0) {
         this->renderView.force_pattern = this->processorRef.force_pattern;
         this->processorRef.force_pattern = Eigen::ArrayXd::Zero(0);
+    }
+
+    if(this->processorRef.curr_geom.points.size() > 0) {
+        this->renderView.curr_geom = this->processorRef.curr_geom;
     }
 }

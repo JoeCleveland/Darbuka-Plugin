@@ -13,6 +13,7 @@ reference_geom(reference_geom), A(A), E(E), I(I), G(G), p(p), ModalElement(-2)
     this->N = reference_geom.points.size() * 6 - 
         std::count(reference_geom.boundaries.begin(), reference_geom.boundaries.end(), true) * 6;
 
+    this->curr_geom = this->reference_geom;
     this->assemble();
     this->solveModal();
     this->initModal();
@@ -20,19 +21,18 @@ reference_geom(reference_geom), A(A), E(E), I(I), G(G), p(p), ModalElement(-2)
 
 void BeamSystem3D::assemble() {
     int dim = 6;
-    uint N_full = reference_geom.points.size() * dim;
+    uint N_full = curr_geom.points.size() * dim;
 
     this->M = Eigen::MatrixXd::Zero(N_full, N_full);
     this->K = Eigen::MatrixXd::Zero(N_full, N_full);
 
-    for(uint cidx = 0; cidx < this->reference_geom.connections.size(); cidx++) {
-        Geom::Connection conn = this->reference_geom.connections[cidx];
+    for(uint cidx = 0; cidx < this->curr_geom.connections.size(); cidx++) {
+        Geom::Connection conn = this->curr_geom.connections[cidx];
 
-        Eigen::Vector3d point_a = this->reference_geom.points[conn.from];
-        Eigen::Vector3d point_b = this->reference_geom.points[conn.to];
+        Eigen::Vector3d point_a = this->curr_geom.points[conn.from];
+        Eigen::Vector3d point_b = this->curr_geom.points[conn.to];
 
         BeamElement beam(point_a, point_b, A, E, I, G, p);
-
 
         auto M_e = beam.M();
         auto K_e = beam.K();
@@ -62,8 +62,8 @@ void BeamSystem3D::assemble() {
 
     // Create boundary condition expansion vector
     Eigen::VectorXi bc_exp = Eigen::VectorXi::Zero(N_full);
-    for (int i = 0; i < reference_geom.boundaries.size(); i++) {
-        if(reference_geom.boundaries[i] == true) {
+    for (int i = 0; i < curr_geom.boundaries.size(); i++) {
+        if(curr_geom.boundaries[i] == true) {
             bc_exp.segment(i * dim, dim) = Eigen::Vector<int, 6>::Ones();
         } else {
             bc_exp.segment(i * dim, dim) = Eigen::Vector<int, 6>::Zero();

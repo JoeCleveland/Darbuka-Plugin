@@ -19,7 +19,7 @@ namespace Params {
         double shear_mod = G_DEFAULT;
 
         double spoke_length = 1.0;
-        double crust_ratio = 1.0;
+        double crust_ratio = 0.0;
 
         double pressing_force = 0.0;
         int pressing_index = 0;

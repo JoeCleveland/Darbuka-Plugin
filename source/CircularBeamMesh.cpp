@@ -60,17 +60,14 @@ BeamSystem3D(A, E, I, G, p)
     //Finished building geom, perform regular system 3D init
     this->N = reference_geom.points.size() * 6 - 
         std::count(reference_geom.boundaries.begin(), reference_geom.boundaries.end(), true) * 6;
+    this->curr_geom = this->reference_geom;
+
+    this->pressing_index = 0;
+    this->pressing_force = 0;
 
     this->assemble();
-    std::cout << "ASSEMBLED" << std::endl;
     this->solveModal();
-    std::cout << "SOLVED" << std::endl;
     this->initModal();
-
-    std::cout << "BUILT CIRCLE" << std::endl;
-
-    std::cout << "K ~~~~~~~~~`\n" << std::endl;
-    std::cout << this->K.topLeftCorner(16, 16) << std::endl;
 }
 
 void CircularBeamMesh::setOfflineParams(Params::offline_params ol_params) {
@@ -78,12 +75,20 @@ void CircularBeamMesh::setOfflineParams(Params::offline_params ol_params) {
     if(std::abs(ol_params.youngs_mod - this->E) > EPSILON ||
        std::abs(ol_params.moment_inert - this->I) > EPSILON ||
        std::abs(ol_params.shear_mod - this->G) > EPSILON ||
-       std::abs(ol_params.mass_density - this->p) > EPSILON) {
+       std::abs(ol_params.mass_density - this->p) > EPSILON ||
+       std::abs(ol_params.crust_ratio - this->eigen_norm_ratio) > EPSILON ||
+
+       std::abs(ol_params.pressing_force - this->pressing_force) > EPSILON ||
+       ol_params.pressing_index != this->pressing_index) {
 
         this->E = ol_params.youngs_mod;
         this->I = ol_params.moment_inert;
         this->G = ol_params.shear_mod;
         this->p = ol_params.mass_density;
+        this->eigen_norm_ratio = ol_params.crust_ratio;
+
+        this->pressing_force = ol_params.pressing_force;
+        this->pressing_index = ol_params.pressing_index;
 
         this->dispatchModalUpdate();
     }
@@ -102,10 +107,27 @@ void CircularBeamMesh::modalUpdate() {
     std::cout << "INSIDE THREAD" << std::endl;
     threadRunning = true;
 
+    this->updateBendingGeom();
     this->assemble();
     this->solveModal();
 
     threadRunning = false;
+}
+
+void CircularBeamMesh::updateBendingGeom() {
+    Eigen::Vector3d pressing_point = this->reference_geom.points[this->pressing_index];
+    for(int point_idx = 0; point_idx < this->reference_geom.points.size(); point_idx++) {
+
+        Eigen::Vector3d point = this->reference_geom.points[point_idx];
+        double distance = std::sqrt(std::pow(pressing_point(0) - point(0), 2) + std::pow(pressing_point(1) - point(1), 2));
+
+        // double displacement = std::exp(-distance * 0.2) * this->pressing_force;
+        double displacement = (std::tanh(2 - 0.8*distance) + 1) * this->pressing_force;
+
+        if(this->reference_geom.boundaries[point_idx] == false) {
+            this->curr_geom.points[point_idx] = point + Eigen::Vector3d(0, 0, displacement);
+        }
+    }
 }
 
 Eigen::ArrayXd CircularBeamMesh::force(double location, double velocity, int type) {

@@ -6,6 +6,7 @@ ModalElement::ModalElement(double base_decay) {
     this->base_decay = base_decay;
     this->Fs = 44100.0;
     this->delta_t = (2.0 * M_PI) / this->Fs;
+    this->eigen_norm_ratio = 0;
 }
 
 void ModalElement::initModal() {
@@ -19,10 +20,13 @@ void ModalElement::solveModal() {
 
     std::cout << "N " << this->N << std::endl;
     std::cout << this->K.diagonalSize() << std::endl;
-    // this->eigensolver.compute(this->M.completeOrthogonalDecomposition().pseudoInverse() * this->K);
+
     this->eigensolver.compute(this->K, this->M);
     this->eigenvalues = this->eigensolver.eigenvalues().head(this->N);
+    this->eigenvalues = (this->eigen_norm_ratio * this->eigenvalues.array()) + ((1 - this->eigen_norm_ratio) * this->eigenvalues.array().sqrt());
+
     this->eigenvectors = this->eigensolver.eigenvectors().topLeftCorner(this->N, this->N);
+
     std::cout << "modes" << std::endl;
     std::cout << this->eigenvalues << std::endl;
     std::cout << "size" << std::endl;
@@ -57,9 +61,12 @@ void ModalElement::truncateModes() {
 
     this->modal_data_lock.lock(); //MUTEX LOCK ########
 
-    this->N_trunc = indexes.size();
-    this->modes_trunc = this->eigenvalues.array().real().abs()(indexes);
-    this->mode_shapes_trunc = this->eigenvectors(indexes, indexes);
+    // this->N_trunc = indexes.size();
+    // this->modes_trunc = this->eigenvalues.array().real().abs()(indexes);
+    // this->mode_shapes_trunc = this->eigenvectors(indexes, indexes);
+    this->N_trunc = this->N;
+    this->modes_trunc = this->eigenvalues.array().real().abs();
+    this->mode_shapes_trunc = this->eigenvectors;
     this->modal_decays = (this->modes_trunc.array() * this->base_decay * this->delta_t).exp();
 
     this->modal_data_lock.unlock(); //MUTEX UNLOCK #####
