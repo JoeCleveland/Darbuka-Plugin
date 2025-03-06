@@ -1,6 +1,7 @@
 .idea
 .vscode
 CMakeFiles/
+JUCE/
 DarbukaPlugin_artefacts
 cmake_install.cmake
 CMakeCache.txt
