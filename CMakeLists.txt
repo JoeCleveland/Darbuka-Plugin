@@ -9,7 +9,7 @@ set(CMAKE_BUILD_TYPE Release)
 # find_package(OpenMP REQUIRED)
 
 # SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -DNDEBUG")
-SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -mfpu=neon -funroll-loops -pthread")
+SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -pthread")
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
 file(GLOB_RECURSE EIGEN_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "Eigen/*")
 
@@ -39,12 +39,17 @@ target_include_directories(DarbukaPlugin PUBLIC "Eigen")
 target_sources(DarbukaPlugin
     PRIVATE
         "${EIGEN_SOURCES}"
+        source/Params.cpp
         source/AllPassFilter.cpp
+        source/CircularBeamMesh.cpp
+        source/BeamElement.cpp
+        source/BeamSystem3D.cpp
         source/ModalElement.cpp
         source/CircularMesh.cpp
         source/RenderView.cpp
         source/ModalPlate.cpp
         source/FEMembrane.cpp
+        source/RolandMIDIMap.cpp
         source/PluginEditor.cpp
         source/PluginProcessor.cpp)
 

@@ -2,8 +2,9 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ModalPlate.h"
-#include "CircularMesh.h"
 #include "AllPassFilter.h"
+#include "Params.h"
+#include "CircularBeamMesh.h"
 // #include "FEMembrane.h"
 //==============================================================================
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
@@ -45,7 +46,15 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-   CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
+//    CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
+   CircularBeamMesh head = CircularBeamMesh(1, 
+                                            10, 
+                                            8,   
+                                            1,  //A 
+                                            Params::E_DEFAULT,
+                                            Params::I_DEFAULT,
+                                            Params::G_DEFAULT,  //G
+                                            Params::p_DEFAULT);//p
    int doom_count = 0;
    int tek_count = 0;
 
@@ -53,8 +62,8 @@ public:
 
     // UI PARAMETERS 
     //==============================================================================
-    ModalElement::realtime_params rt_params;
-    CircularMesh::offline_params ol_params;
+    Params::realtime_params rt_params;
+    Params::offline_params ol_params;
 
     Eigen::ArrayXd force_pattern = Eigen::ArrayXd::Zero(0);
 private:

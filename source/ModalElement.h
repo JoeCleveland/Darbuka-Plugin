@@ -2,6 +2,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <mutex>
+#include "Params.h"
 
 class ModalElement
 {
@@ -9,18 +10,13 @@ public:
     ModalElement(double base_decay);
 
     void getBlock(float* output, uint n_samples, uint projection_index);
-    virtual void force(double location, double velocity);
+    virtual Eigen::ArrayXd force(double location, double velocity);
     void initModal();
     void solveModal();
 
     virtual void assemble() = 0;
 
-    struct realtime_params {
-        double cutoff;
-        double decay;
-    };
-
-    realtime_params rt_params;
+    Params::realtime_params rt_params;
 protected:
     int last_hit = 0;
 

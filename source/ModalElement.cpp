@@ -17,9 +17,16 @@ void ModalElement::initModal() {
 
 void ModalElement::solveModal() {
 
+    std::cout << "N " << this->N << std::endl;
+    std::cout << this->K.diagonalSize() << std::endl;
+    // this->eigensolver.compute(this->M.completeOrthogonalDecomposition().pseudoInverse() * this->K);
     this->eigensolver.compute(this->K, this->M);
     this->eigenvalues = this->eigensolver.eigenvalues().head(this->N);
     this->eigenvectors = this->eigensolver.eigenvectors().topLeftCorner(this->N, this->N);
+    std::cout << "modes" << std::endl;
+    std::cout << this->eigenvalues << std::endl;
+    std::cout << "size" << std::endl;
+    std::cout << this->eigenvalues.size() << std::endl;
 
     //Normalize eigenvectors
 
@@ -56,9 +63,8 @@ void ModalElement::truncateModes() {
     this->modal_decays = (this->modes_trunc.array() * this->base_decay * this->delta_t).exp();
 
     this->modal_data_lock.unlock(); //MUTEX UNLOCK #####
-    std::cout << "DEC " << this->modal_decays.mean() << std::endl;
-    std::cout << "DEC " << this->modal_decays.minCoeff() << std::endl;
-    std::cout << "DEC " << this->modal_decays.maxCoeff() << std::endl;
+
+    std::cout << "modes_trunc " << this->modes_trunc << std::endl;
 }
 
 void ModalElement::getBlock(float* output, uint n_samples, uint projection_index) {
@@ -78,9 +84,6 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
 
     for(uint i = 0; i < this->N_trunc; i++) {
         double angle_change = del_time_exclusive * this->modes_trunc.real()(i);
-        if(this->last_hit == 1) {
-            angle_change = del_time_exclusive * (this->modes_trunc.real()(i) - 10.0);
-        }
 
         Eigen::ArrayXd phase_values = Eigen::ArrayXd::LinSpaced(n_samples, 
             this->phase_angles(i), this->phase_angles(i) + angle_change);
@@ -89,16 +92,7 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
                         (amplitudes(i) + new_forces * f_proj(i)) * 
                         this->mode_shapes_trunc(projection_index, i).real());
 
-        if(this->last_hit == 0) {
-            samples += (phase_values.sin() *
-                            (amplitudes(i) + new_forces * f_proj(i)) * 
-                            this->mode_shapes_trunc(projection_index-1, i).real());
-
-            samples += (phase_values.sin() *
-                            (amplitudes(i) + new_forces * f_proj(i)) * 
-                            this->mode_shapes_trunc(projection_index-2, i).real());
-        }
-        angle_change = del_time_inclusive * this->modes_trunc(i);
+        angle_change = del_time_inclusive * this->modes_trunc.real()(i);
         this->phase_angles(i) += angle_change;
     }
 
@@ -121,7 +115,7 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
     this->modal_data_lock.unlock(); //MUTEX UNLOCK ########
 }
 
-void ModalElement::force(double location, double velocity) {
+Eigen::ArrayXd ModalElement::force(double location, double velocity) {
     Eigen::VectorXd f = (
         (((Eigen::ArrayXd::LinSpaced(this->N_trunc, -3, 3) + location) / 0.003).pow(2) * -0.5).exp() * velocity / 
             (0.003 * std::sqrt(2 * M_PI))

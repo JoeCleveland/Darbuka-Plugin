@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <iostream>
+#include "RolandMIDIMap.h"
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
      : AudioProcessor (BusesProperties()
@@ -139,7 +140,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // std::cout << msg.getMessage().getNoteNumber() << std::endl;
         if(msg.getMessage().isNoteOn()) {
             strike = true;
-            force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 3.0;
+            // force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 5.0;
+            force_pos = RolandMIDIMap::getLocation(msg.getMessage().getNoteNumber());
             velocity = msg.getMessage().getFloatVelocity();
         }
 
@@ -167,8 +169,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     //Handle parameters
 
-    // this->head.ext_pitch = this->membrane_pitch;
     this->head.rt_params = this->rt_params;
+
     this->head.setOfflineParams(this->ol_params);
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)

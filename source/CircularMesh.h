@@ -2,6 +2,7 @@
 #include "ModalElement.h"
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include "Params.h"
 
 class CircularMesh : public ModalElement
 {
@@ -11,15 +12,7 @@ public:
 
     Eigen::ArrayXd force(double location, double velocity, int width);
 
-    struct offline_params {
-        double youngs_mod = 3.0;
-        double moment_inert = 6.0;
-        double mass_density = 16.0;
-        double spoke_length = 0.2;
-        double crust_ratio = 1.0;
-    };
-
-    void setOfflineParams(offline_params ol_params);
+    void setOfflineParams(Params::offline_params ol_params);
 private:
     void placeElementMatrix(int index_a, int index_b, double length, double angle_axial, double angle_transverse);
     void dispatchModalUpdate();

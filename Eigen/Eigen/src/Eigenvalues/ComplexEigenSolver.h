@@ -318,7 +318,7 @@ void ComplexEigenSolver<MatrixType>::doComputeEigenvectors(RealScalar matrixnorm
   // .. and normalize the eigenvectors
   for(Index k=0 ; k<n ; k++)
   {
-    m_eivec.col(k).normalize();
+    m_eivec.col(k).stableNormalize();
   }
 }
 

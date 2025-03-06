@@ -35,7 +35,7 @@ CircularMesh::CircularMesh(uint N_Spokes, uint N_Layers, double spokeLength, dou
     this->initModal();
 }
 
-void CircularMesh::setOfflineParams(offline_params ol_params) {
+void CircularMesh::setOfflineParams(Params::offline_params ol_params) {
     double EPSILON = 0.0001;
     if(std::abs(ol_params.youngs_mod - this->E) > EPSILON ||
        std::abs(ol_params.moment_inert - this->I) > EPSILON ||
