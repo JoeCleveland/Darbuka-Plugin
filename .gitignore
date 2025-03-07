@@ -8,6 +8,7 @@ CMakeCache.txt
 juce_vst3_helper
 Makefile
 libtorch
+build/
 
 .DS_Store
 **/.DS_Store

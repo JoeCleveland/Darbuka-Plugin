@@ -173,15 +173,19 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Handle parameters
 
     this->head.rt_params = this->rt_params;
-
+    
     this->head.setOfflineParams(this->ol_params);
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    auto* channelData = buffer.getWritePointer(0);
-    this->head.getBlock(channelData, length, 9);
-    this->filter.getBlock(channelData, length, this->rt_params.cutoff);
+    // process both left and right channels
+    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    {
+        auto* channelData = buffer.getWritePointer(channel);
+        this->head.getBlock(channelData, length, 9);
+        this->filter.getBlock(channelData, length, this->rt_params.cutoff);
+    }
 }
 
 //==============================================================================
