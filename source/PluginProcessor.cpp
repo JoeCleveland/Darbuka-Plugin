@@ -179,12 +179,16 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // process both left and right channels
-    for (int channel = 0; channel < totalNumOutputChannels; ++channel)
+    // process
+    auto* firstChannelData = buffer.getWritePointer(0);
+    this->head.getBlock(firstChannelData, length, 9);
+    this->filter.getBlock(firstChannelData, length, this->rt_params.cutoff);
+
+    // copy the processed data to other channels
+    for (int channel = 1; channel < totalNumOutputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer(channel);
-        this->head.getBlock(channelData, length, 9);
-        this->filter.getBlock(channelData, length, this->rt_params.cutoff);
+        std::memcpy(channelData, firstChannelData, length * sizeof(float));
     }
 }
 
