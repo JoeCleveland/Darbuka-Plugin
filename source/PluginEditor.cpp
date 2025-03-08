@@ -11,7 +11,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     juce::Colour sliderColor = juce::Colour::fromRGB(127, 40, 0);
 
-    filter_cut.setSliderStyle (juce::Slider::RotaryHorizontalDrag);
+    filter_cut.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     filter_cut.setRange (-10000.0, 10000.0, 1.0);
     filter_cut.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     filter_cut.setPopupDisplayEnabled (true, false, this);
@@ -22,7 +22,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&filter_cut);
     filter_cut.addListener(this);
 
-    membrane_decay.setSliderStyle (juce::Slider::RotaryHorizontalDrag);
+    membrane_decay.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_decay.setRange (0.9, 0.999999, 0.001);
     membrane_decay.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_decay.setPopupDisplayEnabled (true, false, this);
@@ -32,7 +32,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_decay);
     membrane_decay.addListener(this);
 
-    membrane_youngs_mod.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    membrane_youngs_mod.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_youngs_mod.setRange (0.5, 32.0, 0.1);
     membrane_youngs_mod.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_youngs_mod.setPopupDisplayEnabled (true, false, this);
@@ -42,7 +42,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_youngs_mod);
     membrane_youngs_mod.addListener(this);
 
-    membrane_moment_inert.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    membrane_moment_inert.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_moment_inert.setRange (0.5, 32.0, 0.1);
     membrane_moment_inert.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_moment_inert.setPopupDisplayEnabled (true, false, this);
@@ -52,7 +52,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_moment_inert);
     membrane_moment_inert.addListener(this);
 
-    membrane_mass_density.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    membrane_mass_density.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_mass_density.setRange (0.001, 2.0, 0.001);
     membrane_mass_density.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_mass_density.setPopupDisplayEnabled (true, false, this);
@@ -62,7 +62,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_mass_density);
     membrane_mass_density.addListener(this);
 
-    membrane_spoke_length.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    membrane_spoke_length.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_spoke_length.setRange (0.05, 3.0, 0.001);
     membrane_spoke_length.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_spoke_length.setPopupDisplayEnabled (true, false, this);
@@ -72,7 +72,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_spoke_length);
     membrane_spoke_length.addListener(this);
 
-    membrane_crust_ratio.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    membrane_crust_ratio.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     membrane_crust_ratio.setRange (0.0, 1.0, 0.01);
     membrane_crust_ratio.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_crust_ratio.setPopupDisplayEnabled (true, false, this);
@@ -82,7 +82,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&membrane_crust_ratio);
     membrane_crust_ratio.addListener(this);
 
-    bending_force.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    bending_force.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     bending_force.setRange (0.0, 3.0, 0.01);
     bending_force.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     bending_force.setPopupDisplayEnabled (true, false, this);
