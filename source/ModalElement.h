@@ -19,11 +19,10 @@ public:
     Params::realtime_params rt_params;
     double eigen_norm_ratio = 0;
 protected:
+    bool inited = false;
     int last_hit = 0;
 
     std::mutex modal_data_lock;
-
-    void truncateModes();
 
     double delta_t;
     double Fs;
@@ -33,7 +32,6 @@ protected:
     double base_decay;
 
     uint N;
-    uint N_trunc;
     Eigen::MatrixXd M;
     Eigen::MatrixXd K;
 
@@ -44,11 +42,11 @@ protected:
     Eigen::ArrayXd amplitudes;
 
     Eigen::GeneralizedEigenSolver<Eigen::MatrixXd> eigensolver;
-    Eigen::VectorXcd eigenvalues;
-    Eigen::MatrixXcd eigenvectors;
+    Eigen::VectorXd modes;
+    Eigen::MatrixXcd mode_shapes;
 
-    Eigen::VectorXd modes_trunc;
-    Eigen::MatrixXcd mode_shapes_trunc;
+    Eigen::VectorXd modes_last;
+    Eigen::MatrixXcd mode_shapes_last;
 
     Eigen::ArrayXd modal_decays;
     Eigen::ArrayXd phase_angles;

@@ -41,6 +41,7 @@ target_sources(DarbukaPlugin
         "${EIGEN_SOURCES}"
         source/Params.cpp
         source/AllPassFilter.cpp
+        source/DrumFilter.cpp
         source/CircularBeamMesh.cpp
         source/BeamElement.cpp
         source/BeamSystem3D.cpp
@@ -65,6 +66,7 @@ target_link_libraries(DarbukaPlugin
         # DarbukaPluginData           # If we'd created a binary data target, we'd link to it here
         juce::juce_audio_utils
         juce::juce_opengl
+        juce::juce_dsp
         # OpenMP::OpenMP_CXX
     PUBLIC
         juce::juce_recommended_config_flags

@@ -23,7 +23,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     filter_cut.addListener(this);
 
     membrane_decay.setSliderStyle (juce::Slider::RotaryHorizontalDrag);
-    membrane_decay.setRange (0.9, 0.999999, 0.001);
+    membrane_decay.setRange (0.7, 0.999999, 0.001);
     membrane_decay.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
     membrane_decay.setPopupDisplayEnabled (true, false, this);
     membrane_decay.setTextValueSuffix ("DECAY");
@@ -92,6 +92,16 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible (&bending_force);
     bending_force.addListener(this);
 
+    convolution_ratio.setSliderStyle(juce::Slider::RotaryHorizontalDrag);
+    convolution_ratio.setRange (0.0, 1.0, 0.05);
+    convolution_ratio.setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
+    convolution_ratio.setPopupDisplayEnabled (true, false, this);
+    convolution_ratio.setTextValueSuffix ("HEAD FILTER");
+    convolution_ratio.setValue(0.0);
+    convolution_ratio.setColour(juce::Slider::ColourIds::trackColourId, sliderColor);
+    addAndMakeVisible (&convolution_ratio);
+    convolution_ratio.addListener(this);
+
     setSize (800, 600);
 
     startTimer(100);
@@ -117,6 +127,9 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawFittedText ("Density", 200, 80, 40, 15, juce::Justification::centred, 1);
     g.drawFittedText ("Size", 240, 80, 40, 15, juce::Justification::centred, 1);
     g.drawFittedText ("Ratio", 280, 80, 40, 15, juce::Justification::centred, 1);
+
+    g.drawFittedText ("Bending", 40, 170, 40, 15, juce::Justification::centred, 1);
+    g.drawFittedText ("Convolution", 80, 170, 40, 15, juce::Justification::centred, 1);
 }
 
 void AudioPluginAudioProcessorEditor::resized()
@@ -132,12 +145,14 @@ void AudioPluginAudioProcessorEditor::resized()
     membrane_crust_ratio.setBounds (280, 30, 40, 40);
 
     bending_force.setBounds (40, 120, 40, 40);
+    convolution_ratio.setBounds (80, 120, 40, 40);
 }
 
 void AudioPluginAudioProcessorEditor::sliderValueChanged(juce::Slider* slider) 
 {
     this->processorRef.rt_params.cutoff = filter_cut.getValue();
     this->processorRef.rt_params.decay = membrane_decay.getValue();
+    this->processorRef.rt_params.convolution_ratio = convolution_ratio.getValue();
 
     this->processorRef.ol_params.youngs_mod = membrane_youngs_mod.getValue();
     this->processorRef.ol_params.moment_inert = membrane_moment_inert.getValue();

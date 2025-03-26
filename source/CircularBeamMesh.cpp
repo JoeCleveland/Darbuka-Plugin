@@ -135,26 +135,26 @@ Eigen::ArrayXd CircularBeamMesh::force(double location, double velocity, int typ
     //return np.exp((((x-mu)/sigma) ** 2) / -2) / (sigma * np.sqrt(2 * np.pi))
     double sigma = 0.03;
 
-    // if(type == 1) {
-        // sigma = 3;
-    // }
+    if(type == 1) {
+        sigma = 1;
+        location += 0.5;
+    }
 
-    Eigen::ArrayXd x = Eigen::ArrayXd::LinSpaced((int) this->N_trunc, -3, 3);
+    this->last_hit = type;
+
+    Eigen::ArrayXd x = Eigen::ArrayXd::LinSpaced((int) this->N, -3, 3);
     Eigen::ArrayXd exp_term = (((x.array() - location) / sigma).pow(2) * (-0.5)).exp() * velocity;
     Eigen::ArrayXd f_transverse = exp_term / (sigma * std::sqrt(2 * M_PI));
   
     // std::cout << "SIGMA " << sigma << std::endl;  
 
-    std::cout << "*****" << std::endl;
+    // std::cout << "*****" << std::endl;
     // std::cout << "f " << f_transverse << std::endl;
-    std::cout << "*****" << std::endl;
-    std::cout << "LOC " << location << std::endl;  
-    std::cout << "Params" << A  << " :: " << E << " :: " << I << " :: " << G << " :: " << p << " :: " << std::endl;
-    // std::cout << "=====" << std::endl;
-    // std::cout << "f_tr " << f_transverse << std::endl;
+    // std::cout << "*****" << std::endl;
+    // std::cout << "TYPE " << type << std::endl;  
     this->modal_data_lock.lock();
 
-    this->f_proj = (this->mode_shapes_trunc.cwiseAbs() * f_transverse.matrix()).array(); 
+    this->f_proj = (this->mode_shapes.cwiseAbs() * f_transverse.matrix()).array(); 
     this->modal_data_lock.unlock();
 
     this->force_envelope_on = true;

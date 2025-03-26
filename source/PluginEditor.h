@@ -34,6 +34,7 @@ private:
     juce::Slider membrane_crust_ratio;
 
     juce::Slider bending_force;
+    juce::Slider convolution_ratio;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessorEditor)
 };

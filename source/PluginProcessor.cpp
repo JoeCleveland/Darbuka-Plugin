@@ -140,31 +140,40 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // std::cout << msg.getMessage().getNoteNumber() << std::endl;
         if(msg.getMessage().isNoteOn()) {
             strike = true;
-            force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 5.0;
-            // force_pos = RolandMIDIMap::getLocation(msg.getMessage().getNoteNumber());
+            // force_pos = ((double)msg.getMessage().getNoteNumber() - 60) / 127.0f * 5.0;
+            force_pos = RolandMIDIMap::getLocation(msg.getMessage().getNoteNumber());
             velocity = msg.getMessage().getFloatVelocity();
+        }
+
+
+        if(msg.getMessage().isAftertouch() && msg.getMessage().getNoteNumber() == 60) {
+            double value = msg.getMessage().getAfterTouchValue()/127.0 * 3.0;
+            this->ol_params.pressing_force = value;
+            std::cout << "[BEND] " << value << std::endl; 
+            std::cout << "[NOTE] " << msg.getMessage().getNoteNumber() << std::endl;
         }
 
         if(msg.getMessage().isController()) {
             int cc_number = msg.getMessage().getControllerNumber();
             if(cc_number == 20) {
-                int gesture = msg.getMessage().getControllerValue();
-                if(gesture == 0)
-                    this->doom_count++;
-                if(gesture == 1)
-                    this->tek_count++;
+                int gesture_result = (int)msg.getMessage().getControllerValue();
+                if(gesture_result == 0 || gesture_result == 1)
+                    this->detected_gesture = 1;
+                if(gesture_result == 2)
+                    this->detected_gesture = 0;
             }
         }
     }
 
     if(strike) {
-        if(doom_count > tek_count) {
+        if(this->detected_gesture == 1) {
             this->force_pattern = this->head.force(force_pos, velocity, 1);
+            this->gesture_mode = 1;
         } else {
             this->force_pattern = this->head.force(force_pos, velocity, 0);
+            this->gesture_mode = 0;
         }
-        this->doom_count = 0;
-        this->tek_count = 0;
+        std::cout << "[B O I N G] " << this->gesture_mode << " ||| " << this->detected_gesture << std::endl;
     }
 
     //Handle UI update
@@ -176,12 +185,20 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     this->head.setOfflineParams(this->ol_params);
 
+
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
     auto* channelData = buffer.getWritePointer(0);
     this->head.getBlock(channelData, length, 9);
     this->filter.getBlock(channelData, length, this->rt_params.cutoff);
+
+    if(this->gesture_mode == 0) {
+        this->drum_filter.getBlock(buffer, 0, this->rt_params.convolution_ratio);
+    }
+    if(this->gesture_mode == 1) {
+        this->drum_filter.getBlock(buffer, 1, this->rt_params.convolution_ratio);
+    }
 }
 
 //==============================================================================

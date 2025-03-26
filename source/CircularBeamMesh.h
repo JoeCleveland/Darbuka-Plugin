@@ -9,9 +9,10 @@ public:
     Eigen::ArrayXd force(double location, double velocity, int type);
 
     void setOfflineParams(Params::offline_params ol_params);
-private:
+
     double pressing_force;
     int pressing_index;
+private:
 
     void updateBendingGeom();
     void dispatchModalUpdate();

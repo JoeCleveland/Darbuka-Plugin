@@ -190,14 +190,14 @@ Eigen::ArrayXd CircularMesh::force(double location, double velocity, int width) 
         location *= 1;
     }
 
-    Eigen::ArrayXd x = Eigen::ArrayXd::LinSpaced((int) this->N_trunc, -3, 3);
+    Eigen::ArrayXd x = Eigen::ArrayXd::LinSpaced((int) this->N, -3, 3);
     Eigen::ArrayXd exp_term = (((x.array() - location) / sigma).pow(2) * (-0.5)).exp() * velocity;
     Eigen::ArrayXd f_transverse = exp_term / (sigma * std::sqrt(2 * M_PI));
   
     Eigen::ArrayXd f;
     if(width == 1) {
         this->last_hit = 1;
-        f = Eigen::ArrayXd::Zero(this->N_trunc);
+        f = Eigen::ArrayXd::Zero(this->N);
         f(0) = f_transverse.sum();
     } else {
         this->last_hit = 0;
@@ -215,7 +215,7 @@ Eigen::ArrayXd CircularMesh::force(double location, double velocity, int width) 
     // std::cout << "f_tr " << f_transverse << std::endl;
     this->modal_data_lock.lock();
 
-    this->f_proj = (this->mode_shapes_trunc.cwiseAbs() * f.matrix()).array(); 
+    this->f_proj = (this->modes.cwiseAbs() * f.matrix()).array(); 
     this->modal_data_lock.unlock();
 
     this->force_envelope_on = true;

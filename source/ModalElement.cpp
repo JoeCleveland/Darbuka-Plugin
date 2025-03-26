@@ -10,9 +10,9 @@ ModalElement::ModalElement(double base_decay) {
 }
 
 void ModalElement::initModal() {
-    this->amplitudes = Eigen::VectorXd::Zero(this->N_trunc);
-    this->f_proj = Eigen::ArrayXd::Zero(this->N_trunc);
-    this->phase_angles = Eigen::ArrayXd::Zero(this->N_trunc);
+    this->amplitudes = Eigen::VectorXd::Zero(this->N);
+    this->f_proj = Eigen::ArrayXd::Zero(this->N);
+    this->phase_angles = Eigen::ArrayXd::Zero(this->N);
     this->force_envelope_on = false;
 }
 
@@ -22,56 +22,28 @@ void ModalElement::solveModal() {
     std::cout << this->K.diagonalSize() << std::endl;
 
     this->eigensolver.compute(this->K, this->M);
-    this->eigenvalues = this->eigensolver.eigenvalues().head(this->N);
-    this->eigenvalues = (this->eigen_norm_ratio * this->eigenvalues.array()) + ((1 - this->eigen_norm_ratio) * this->eigenvalues.array().sqrt());
-
-    this->eigenvectors = this->eigensolver.eigenvectors().topLeftCorner(this->N, this->N);
-
-    std::cout << "modes" << std::endl;
-    std::cout << this->eigenvalues << std::endl;
-    std::cout << "size" << std::endl;
-    std::cout << this->eigenvalues.size() << std::endl;
-
-    //Normalize eigenvectors
-
-    // Eigen::MatrixXcd normalized_eigens = Eigen::MatrixXcd::Zero(this->N, this->N);
-    // for(uint i = 0; i < this->N; i++){
-    //     Eigen::VectorXcd phi = this->eigenvectors(Eigen::all, i);
-    //     normalized_eigens(Eigen::all, i) = phi.array() / (phi.transpose() * this->M * phi).array().sqrt();
-    //     std::cout << phi.transpose() * this->M * phi << std::endl;
-    // }
-    // std::cout << "EIGEN-OLD\n" << this->eigenvectors(Eigen::seqN(0, 3), Eigen::seqN(0, 3)) << std::endl;
-    // std::cout << "EIGENVECTORS\n" << normalized_eigens(Eigen::seqN(0, 3), Eigen::seqN(0, 3)) << std::endl;
-    // std::cout << "EIGENVALUES\n" << this->eigenvalues(Eigen::seqN(0, 3)) << std::endl;
-
-    // this->eigenvectors = normalized_eigens;
-
-    this->truncateModes();
-}
-
-void ModalElement::truncateModes() {
-    std::vector<double> modes;
-    std::vector<int> indexes;
-    for(uint i = 0; i < this->eigenvalues.size(); i++) {
-        if(this->eigenvalues.array().real().abs()[i] > 30 && this->eigenvalues.array().real().abs()[i] < 20000) {
-            modes.push_back(this->eigenvalues.array().real().abs()(i));
-            indexes.push_back(i);
-        }
-    }
 
     this->modal_data_lock.lock(); //MUTEX LOCK ########
 
-    // this->N_trunc = indexes.size();
-    // this->modes_trunc = this->eigenvalues.array().real().abs()(indexes);
-    // this->mode_shapes_trunc = this->eigenvectors(indexes, indexes);
-    this->N_trunc = this->N;
-    this->modes_trunc = this->eigenvalues.array().real().abs();
-    this->mode_shapes_trunc = this->eigenvectors;
-    this->modal_decays = (this->modes_trunc.array() * this->base_decay * this->delta_t).exp();
+    bool first_rodeo = true;
+    if(this->modes.size() == this->N) {
+        this->modes_last = this->modes;
+        this->mode_shapes_last = this->mode_shapes;
+        first_rodeo = false;
+    }
+
+    this->modes = this->eigensolver.eigenvalues().array().real().abs();
+    this->modes = ((1 - this->eigen_norm_ratio) * this->modes.array()) + this->eigen_norm_ratio * this->modes.array().sqrt();
+    this->mode_shapes = this->eigensolver.eigenvectors();
+    this->modal_decays = (this->modes.array() * this->base_decay * this->delta_t).exp();
+
+    if(first_rodeo) {
+        this->modes_last = this->modes;
+        this->mode_shapes_last = this->mode_shapes;
+    }
 
     this->modal_data_lock.unlock(); //MUTEX UNLOCK #####
 
-    std::cout << "modes_trunc " << this->modes_trunc << std::endl;
 }
 
 void ModalElement::getBlock(float* output, uint n_samples, uint projection_index) {
@@ -89,48 +61,68 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
     double del_time_exclusive = this->delta_t * (n_samples);
     double del_time_inclusive = this->delta_t * (n_samples + 1);
 
-    for(uint i = 0; i < this->N_trunc; i++) {
-        double angle_change = del_time_exclusive * this->modes_trunc.real()(i);
+    Eigen::ArrayXd truncation_mask = Eigen::ArrayXd::Zero(this->N);
+
+    for(uint i = 0; i < this->N; i++) {
+        double angle_change;
+        angle_change = del_time_exclusive * this->modes(i);
 
         Eigen::ArrayXd phase_values = Eigen::ArrayXd::LinSpaced(n_samples, 
             this->phase_angles(i), this->phase_angles(i) + angle_change);
 
-        samples += (phase_values.sin() *
-                        (amplitudes(i) + new_forces * f_proj(i)) * 
-                        this->mode_shapes_trunc(projection_index, i).real());
+        Eigen::ArrayXd projection_values = Eigen::ArrayXd::LinSpaced(n_samples, 1, 0) * this->mode_shapes_last(projection_index, i).real() +
+                                           Eigen::ArrayXd::LinSpaced(n_samples, 0, 1) * this->mode_shapes(projection_index, i).real();
+        if(this->modes(i) > 30 && this->modes(i) < 20000) {
+            samples += (phase_values.sin() *
+                            (amplitudes(i) + new_forces * f_proj(i)) * 
+                             projection_values);
+            truncation_mask(i) = 1.0;
+        } else {
+            //OK so if we just cut out the truncated modes all of a sudden it creates rice krispies, 
+            //so we need to envelope them away all smooth and buttery like
+            // e^-ax - (x / e^ax) creates a nice slope that starts at y=1 and ends at x=1, adjust the curvature with 'a'
+            //We set the amplitudes to zero to prevent this going on again in the next block, and we then prevent truncated mode 
+            //amplitudes from getting triggered at all by building the truncation mask
+            Eigen::ArrayXd dec_param = Eigen::ArrayXd::LinSpaced(n_samples, 0, 1);
+            Eigen::ArrayXd decay_env = this->amplitudes(i) * (Eigen::exp(-dec_param) - dec_param / Eigen::exp(dec_param));
+            samples += (phase_values.sin() *
+                            decay_env * 
+                            projection_values);
+            this->amplitudes(i) = 0;
+            truncation_mask(i) = 0.0;
+        }
 
-        angle_change = del_time_inclusive * this->modes_trunc.real()(i);
+        angle_change = del_time_inclusive * this->modes(i);
         this->phase_angles(i) += angle_change;
     }
 
     for(uint s = 0; s < n_samples; s++) {
-        output[s] += samples[s] * 0.005;
+        output[s] += samples[s] * 0.01;
     }
 
     if(this->force_envelope_on) {
-        this->amplitudes += f_proj;
+        this->amplitudes += (f_proj * truncation_mask);
         this->force_envelope_on = false;
     }
 
-    //Update modal amplitudes from decay
-    // this->modal_decays = (this->eigenvalues.real().array() * this->base_decay * this->ext_decay * this->delta_t).exp();
-
     this->amplitudes = this->amplitudes * (this->modal_decays * this->rt_params.decay);
-    // std::cout << "decays " << this->modal_decays.mean() << std::endl;
-    // std::cout << "amps " << this->amplitudes.mean() << std::endl;
+
+    //After doing a block interpolation we don't wanna do it again
+    this->mode_shapes_last = this->mode_shapes;
+    this->modes_last = this->modes;
 
     this->modal_data_lock.unlock(); //MUTEX UNLOCK ########
 }
 
 Eigen::ArrayXd ModalElement::force(double location, double velocity) {
     Eigen::VectorXd f = (
-        (((Eigen::ArrayXd::LinSpaced(this->N_trunc, -3, 3) + location) / 0.003).pow(2) * -0.5).exp() * velocity / 
+        (((Eigen::ArrayXd::LinSpaced(this->N, -3, 3) + location) / 0.003).pow(2) * -0.5).exp() * velocity / 
             (0.003 * std::sqrt(2 * M_PI))
                         ).array();
 
     this->modal_data_lock.lock();
 
-    this->f_proj = (this->mode_shapes_trunc.cwiseAbs() * f).array(); 
+    this->f_proj = (this->mode_shapes.cwiseAbs() * f).array(); 
     this->modal_data_lock.unlock();
 
     this->force_envelope_on = true;

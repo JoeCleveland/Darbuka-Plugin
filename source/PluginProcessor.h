@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "ModalPlate.h"
 #include "AllPassFilter.h"
+#include "DrumFilter.h"
 #include "Params.h"
 #include "CircularBeamMesh.h"
 // #include "FEMembrane.h"
@@ -48,17 +49,18 @@ public:
 
 //    CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
    CircularBeamMesh head = CircularBeamMesh(1, 
-                                            16, 
-                                            6,   
+                                            6, 
+                                            8,   
                                             1,  //A 
                                             Params::E_DEFAULT,
                                             Params::I_DEFAULT,
                                             Params::G_DEFAULT,  //G
                                             Params::p_DEFAULT);//p
-   int doom_count = 0;
-   int tek_count = 0;
+   int gesture_mode = 0;
+   int detected_gesture = 0;
 
    AllPassFilter filter = AllPassFilter();
+   DrumFilter drum_filter = DrumFilter();
 
     // UI PARAMETERS 
     //==============================================================================

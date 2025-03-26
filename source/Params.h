@@ -10,6 +10,7 @@ namespace Params {
     struct realtime_params {
         double cutoff;
         double decay;
+        double convolution_ratio;
     };
 
     struct offline_params {
