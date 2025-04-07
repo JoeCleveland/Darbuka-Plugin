@@ -1,5 +1,6 @@
 #include <iostream>
 #include <thread>
+#include <chrono>
 #include "CircularBeamMesh.h"
 #include "Geom.h"
 
@@ -96,22 +97,33 @@ void CircularBeamMesh::setOfflineParams(Params::offline_params ol_params) {
 
 void CircularBeamMesh::dispatchModalUpdate() {
     if(!threadRunning) {
-        std::cout << "STARTING THREAD" << std::endl;
         std::thread t1(&CircularBeamMesh::modalUpdate, this);
         t1.detach();
-        std::cout << "SCOPING OUT BROTHERS" << std::endl;
     }
 }
 
 void CircularBeamMesh::modalUpdate() {
-    std::cout << "INSIDE THREAD" << std::endl;
+    std::cout << "THREAD" << std::endl;
     threadRunning = true;
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     this->updateBendingGeom();
     this->assemble();
     this->solveModal();
 
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::cout << "COMPUTATION TIME: " << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() << "ns" << std::endl;
     threadRunning = false;
+}
+
+void CircularBeamMesh::updateModalDecays() {
+    Eigen::ArrayXd damping_ratios = (this->rt_params.decay_alpha / (2 * this->modes.array())) + 
+                                    (this->rt_params.decay_beta * this->modes.array()) / 2 +
+                                     this->mode_shapes(Eigen::all, this->pressing_index).array().abs().real() * this->pressing_force * this->rt_params.decay_gamma;
+
+
+    this->modal_decays = (-damping_ratios * this->delta_t).exp();
 }
 
 void CircularBeamMesh::updateBendingGeom() {
@@ -122,7 +134,7 @@ void CircularBeamMesh::updateBendingGeom() {
         double distance = std::sqrt(std::pow(pressing_point(0) - point(0), 2) + std::pow(pressing_point(1) - point(1), 2));
 
         // double displacement = std::exp(-distance * 0.2) * this->pressing_force;
-        double displacement = (std::tanh(2 - 0.8*distance) + 1) * this->pressing_force;
+        double displacement = (std::tanh(2 - 0.8*distance) + 1) * (this->pressing_force * 0.5);
 
         if(this->reference_geom.boundaries[point_idx] == false) {
             this->curr_geom.points[point_idx] = point + Eigen::Vector3d(0, 0, displacement);
@@ -152,6 +164,10 @@ Eigen::ArrayXd CircularBeamMesh::force(double location, double velocity, int typ
     // std::cout << "f " << f_transverse << std::endl;
     // std::cout << "*****" << std::endl;
     // std::cout << "TYPE " << type << std::endl;  
+    // std::cout << " MODE SHAPES ============ \n" << this->mode_shapes(Eigen::all, this->pressing_index).array().abs().real() * this->pressing_force * 16 << std::endl;
+    std::cout << " MODE SHAPES ============ \n" << this->mode_shapes(Eigen::all, this->pressing_index).array().bottomRows(12).abs().real() * this->pressing_force * this->rt_params.decay_gamma << std::endl;
+    std::cout << "DECAYS ===== \n" << this->modal_decays.bottomRows(12) << std::endl;
+    std::cout << "MODES === \n" << this->modes.bottomRows(12) << std::endl;
     this->modal_data_lock.lock();
 
     this->f_proj = (this->mode_shapes.cwiseAbs() * f_transverse.matrix()).array(); 

@@ -49,8 +49,8 @@ public:
 
 //    CircularMesh head = CircularMesh(8, 8, 0.2, 12, 3, 6, 16);
    CircularBeamMesh head = CircularBeamMesh(1, 
-                                            6, 
-                                            8,   
+                                            7, 
+                                            7,   
                                             1,  //A 
                                             Params::E_DEFAULT,
                                             Params::I_DEFAULT,

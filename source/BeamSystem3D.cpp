@@ -31,8 +31,10 @@ void BeamSystem3D::assemble() {
 
         Eigen::Vector3d point_a = this->curr_geom.points[conn.from];
         Eigen::Vector3d point_b = this->curr_geom.points[conn.to];
+        Eigen::Vector3d ref_point_a = this->reference_geom.points[conn.from];
+        Eigen::Vector3d ref_point_b = this->reference_geom.points[conn.to];
 
-        BeamElement beam(point_a, point_b, A, E, I, G, p);
+        BeamElement beam(point_a, point_b, ref_point_a, ref_point_b, A, E, I, G, p);
 
         auto M_e = beam.M();
         auto K_e = beam.K();

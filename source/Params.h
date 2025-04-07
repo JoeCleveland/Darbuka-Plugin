@@ -10,6 +10,9 @@ namespace Params {
     struct realtime_params {
         double cutoff;
         double decay;
+        double decay_alpha;
+        double decay_beta;
+        double decay_gamma;
         double convolution_ratio;
     };
 

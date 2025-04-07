@@ -35,7 +35,6 @@ void ModalElement::solveModal() {
     this->modes = this->eigensolver.eigenvalues().array().real().abs();
     this->modes = ((1 - this->eigen_norm_ratio) * this->modes.array()) + this->eigen_norm_ratio * this->modes.array().sqrt();
     this->mode_shapes = this->eigensolver.eigenvectors();
-    this->modal_decays = (this->modes.array() * this->base_decay * this->delta_t).exp();
 
     if(first_rodeo) {
         this->modes_last = this->modes;
@@ -44,6 +43,13 @@ void ModalElement::solveModal() {
 
     this->modal_data_lock.unlock(); //MUTEX UNLOCK #####
 
+}
+
+void ModalElement::updateModalDecays() {
+    Eigen::ArrayXd damping_ratios = (this->rt_params.decay_alpha / (2 * this->modes.array())) + 
+                                    (this->rt_params.decay_beta * this->modes.array()) / 2;
+
+    this->modal_decays = (-damping_ratios * this->delta_t).exp();
 }
 
 void ModalElement::getBlock(float* output, uint n_samples, uint projection_index) {
@@ -72,7 +78,9 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
 
         Eigen::ArrayXd projection_values = Eigen::ArrayXd::LinSpaced(n_samples, 1, 0) * this->mode_shapes_last(projection_index, i).real() +
                                            Eigen::ArrayXd::LinSpaced(n_samples, 0, 1) * this->mode_shapes(projection_index, i).real();
-        if(this->modes(i) > 30 && this->modes(i) < 20000) {
+
+        //Modulo by 6 ensures that only transverse vibration modes are audible
+        if(this->modes(i) > 30 && this->modes(i) < 20000 && i % 6 == 1) {
             samples += (phase_values.sin() *
                             (amplitudes(i) + new_forces * f_proj(i)) * 
                              projection_values);
@@ -105,6 +113,7 @@ void ModalElement::getBlock(float* output, uint n_samples, uint projection_index
         this->force_envelope_on = false;
     }
 
+    this->updateModalDecays();
     this->amplitudes = this->amplitudes * (this->modal_decays * this->rt_params.decay);
 
     //After doing a block interpolation we don't wanna do it again

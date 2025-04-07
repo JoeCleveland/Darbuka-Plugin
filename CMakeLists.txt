@@ -6,7 +6,7 @@ project(DARBUKA_PLUGIN VERSION 0.0.1)
 
 set(CMAKE_BUILD_TYPE Release)
 
-# find_package(OpenMP REQUIRED)
+find_package(OpenMP REQUIRED)
 
 # SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -DNDEBUG")
 SET(GCC_COVERAGE_COMPILE_FLAGS "-w -march=native -O3 -mfpu=neon -funroll-loops -pthread")
@@ -67,7 +67,7 @@ target_link_libraries(DarbukaPlugin
         juce::juce_audio_utils
         juce::juce_opengl
         juce::juce_dsp
-        # OpenMP::OpenMP_CXX
+        OpenMP::OpenMP_CXX
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

@@ -1,8 +1,8 @@
 #include "BeamElement.h"
 #include <iostream>
 
-BeamElement::BeamElement(Eigen::Vector3d point_a, Eigen::Vector3d point_b, double A, double E, double I, double G, double p)
-: point_a(point_a), point_b(point_b), A(A), E(E), I(I), G(G), p(p) 
+BeamElement::BeamElement(Eigen::Vector3d point_a, Eigen::Vector3d point_b, Eigen::Vector3d ref_point_a, Eigen::Vector3d ref_point_b, double A, double E, double I, double G, double p)
+: point_a(point_a), point_b(point_b), ref_point_a(ref_point_a), ref_point_b(ref_point_b), A(A), E(E), I(I), G(G), p(p) 
 {
 
 }
@@ -15,9 +15,17 @@ double BeamElement::length() {
     return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2) + std::pow(dz, 2));
 }
 
+double BeamElement::ref_length() {
+    double dx = ref_point_a(0) - ref_point_b(0);
+    double dy = ref_point_a(1) - ref_point_b(1);
+    double dz = ref_point_a(2) - ref_point_b(2);
+
+    return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2) + std::pow(dz, 2));
+}
+
 Eigen::Matrix<double, 12, 12> BeamElement::M() {
     double r = I / A;
-    double L = this->length();
+    double L = this->ref_length();
 
     Eigen::Matrix<double, 12, 12> M; 
     M << 70, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 0,
@@ -40,19 +48,20 @@ Eigen::Matrix<double, 12, 12> BeamElement::M() {
 }
 
 Eigen::Matrix<double, 12, 12> BeamElement::K() {
-    double L = length();
+    double E_c = this->E + this->E * 2 * (this->length() - this->ref_length());
+    double L = ref_length();
     double k11, k22, k33, k44, k55, k66, k77, k88, k99, k1010, k1111, k1212,
            k17, k26, k59, k911, k28, k39, k35, k311, k68, k812, k410, k511, k612;
-    k11 = k77 =                 (A * E) / (2 * L);
-    k17 =                       -(A * E) / (2 * L);
-    k22 = k33 = k88 = k99 =     (3 * E * I) / (2 * std::pow(L, 3));
-    k26 = k59 = k911 =          (3 * E * I) / (2 * std::pow(L, 2));
-    k28 = k39 =                 (-3 * E * I) / (2 * std::pow(L, 3));
-    k35 = k311 = k68 = k812 =   (-3 * E * I) / (2 * std::pow(L, 2));
+    k11 = k77 =                 (A * E_c) / (2 * L);
+    k17 =                       -(A * E_c) / (2 * L);
+    k22 = k33 = k88 = k99 =     (3 * E_c * I) / (2 * std::pow(L, 3));
+    k26 = k59 = k911 =          (3 * E_c * I) / (2 * std::pow(L, 2));
+    k28 = k39 =                 (-3 * E_c * I) / (2 * std::pow(L, 3));
+    k35 = k311 = k68 = k812 =   (-3 * E_c * I) / (2 * std::pow(L, 2));
     k44  = k1010 =              (G) / (2*L);
     k410 =                      -(G) / (2*L);
-    k55 = k66 = k1111 = k1212 = (2 * E * I) / L;
-    k511 = k612 =               (E * I) / L;
+    k55 = k66 = k1111 = k1212 = (2 * E_c * I) / L;
+    k511 = k612 =               (E_c * I) / L;
 
     Eigen::Matrix<double, 12, 12> K;
     K << k11, 0, 0, 0, 0, 0, k17, 0, 0, 0, 0, 0,

@@ -26,11 +26,14 @@ private:
     juce::Slider filter_cut;
 
     juce::Slider membrane_decay;
+    juce::Slider membrane_decay_alpha;
+    juce::Slider membrane_decay_beta;
+    juce::Slider membrane_decay_gamma;
 
     juce::Slider membrane_youngs_mod;
     juce::Slider membrane_moment_inert;
     juce::Slider membrane_mass_density;
-    juce::Slider membrane_spoke_length;
+    juce::Slider membrane_shear_mod;
     juce::Slider membrane_crust_ratio;
 
     juce::Slider bending_force;

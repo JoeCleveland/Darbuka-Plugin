@@ -146,11 +146,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
 
 
-        if(msg.getMessage().isAftertouch() && msg.getMessage().getNoteNumber() == 60) {
+        if(msg.getMessage().isAftertouch() && msg.getMessage().getNoteNumber() >= 60 && msg.getMessage().getNoteNumber() <= 64) {
             double value = msg.getMessage().getAfterTouchValue()/127.0 * 3.0;
+            int location = RolandMIDIMap::getPressingLocation(msg.getMessage().getNoteNumber());
             this->ol_params.pressing_force = value;
-            std::cout << "[BEND] " << value << std::endl; 
-            std::cout << "[NOTE] " << msg.getMessage().getNoteNumber() << std::endl;
+            this->ol_params.pressing_index = location;
+            // std::cout << "[BEND] " << value << std::endl; 
+            // std::cout << "[NOTE] " << msg.getMessage().getNoteNumber() << std::endl;
         }
 
         if(msg.getMessage().isController()) {
@@ -173,7 +175,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             this->force_pattern = this->head.force(force_pos, velocity, 0);
             this->gesture_mode = 0;
         }
-        std::cout << "[B O I N G] " << this->gesture_mode << " ||| " << this->detected_gesture << std::endl;
     }
 
     //Handle UI update

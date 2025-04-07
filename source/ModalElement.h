@@ -13,6 +13,7 @@ public:
     virtual Eigen::ArrayXd force(double location, double velocity);
     void initModal();
     void solveModal();
+    virtual void updateModalDecays();
 
     virtual void assemble() = 0;
 

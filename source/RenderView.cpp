@@ -133,9 +133,9 @@ juce::Matrix3D<float> RenderView::getProjectionMatrix() const
 
 juce::Matrix3D<float> RenderView::getViewMatrix(float angle_y) const
 {
-    auto viewMatrix = juce::Matrix3D<float>::fromTranslation ({ 0.0f, -0.65f, -10.0f });  
-    auto rotationMatrix = viewMatrix.rotation ({ 0.3f,
-                                                    angle_y,
+    auto viewMatrix = juce::Matrix3D<float>::fromTranslation ({ -1.0f, -0.65f, -10.0f });  
+    auto rotationMatrix = viewMatrix.rotation ({ 0.8f,
+                                                    -2.0f,
                                                     0.0f });                        
     // printMatrix(viewMatrix, "VIEW");
     // printMatrix(rotationMatrix, "ROT");
@@ -230,7 +230,7 @@ void RenderView::newOpenGLContextCreated()
 
 void RenderView::renderOpenGL()
 {
-    angle_y += 0.003;
+    // angle_y += 0.003;
     juce::OpenGLHelpers::clear(juce::Colour::fromRGB(0, 30, 50));
 
     shaderProgram->use();
